@@ -251,6 +251,6 @@ const print_debug = () => {
   text(`frame: ${frame}`, -width/2 + 8, -height/2 + 12);
   text(`frameRate: ${frameRate().toFixed(2)}`, -width/2 + 8, -height/2 + 24);
   text(`width: ${width}`, -width/2 + 8, -height/2 + 36);
-  text(`angleX: ${angleX}`, -width/2 + 8, -height/2 + 48);
-  text(`angleY: ${angleY}`, -width/2 + 8, -height/2 + 60);
+  text(`angleX: ${angleX.toFixed(5)}`, -width/2 + 8, -height/2 + 48);
+  text(`angleY: ${angleY.toFixed(5)}`, -width/2 + 8, -height/2 + 60);
 }
