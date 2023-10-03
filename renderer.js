@@ -119,14 +119,12 @@ const renderCube = (cube) => {
   }
 };
 
-const connect = (i, j, points) => {
-  const a = points[i];
-  const b = points[j];
-
-  strokeWeight(1);
-  // stroke(255);
-  // stroke(255, 165, 0);
-  line(a.x, a.y, b.x, b.y);
+const shade = (normal) => {
+  const light = createVector(1, 1, 1).normalize();
+  // const normalizedNormal = normal.normalize();
+  let light_intensity = p5.Vector.dot(normal, light);
+  light_intensity = min(0, light_intensity);
+  return color(light_intensity * -255);
 }
 
 const render = o => {
@@ -154,17 +152,27 @@ const render = o => {
 
   // connect points
   for (let i = 0; i < o.triangles.length; i++) {
-    const triangle = o.triangles[i];
+    const t = o.triangles[i];
 
     // backface culling
-    const edge1 = p5.Vector.sub(projectedPoints[triangle[1]], projectedPoints[triangle[0]]);
-    const edge2 = p5.Vector.sub(projectedPoints[triangle[2]], projectedPoints[triangle[0]]);
+    const edge1 = p5.Vector.sub(projectedPoints[t[1]], projectedPoints[t[0]]);
+    const edge2 = p5.Vector.sub(projectedPoints[t[2]], projectedPoints[t[0]]);
     const normal = p5.Vector.cross(edge1, edge2).normalize();
 
     if (normal.z < 0) {
-      connect(triangle[0], triangle[1], projectedPoints);
-      connect(triangle[1], triangle[2], projectedPoints);
-      connect(triangle[2], triangle[0], projectedPoints);
+
+      const colour = shade(normal);
+
+      strokeWeight(1);
+      fill(colour);
+      triangle(
+        projectedPoints[t[0]].x,
+        projectedPoints[t[0]].y,
+        projectedPoints[t[1]].x,
+        projectedPoints[t[1]].y,
+        projectedPoints[t[2]].x,
+        projectedPoints[t[2]].y,
+      );
     }
   }
 
