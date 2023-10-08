@@ -279,17 +279,42 @@ const print_debug = () => {
   text(`angleY: ${angleY.toFixed(5)}`, -width/2 + 8, -height/2 + 60);
 }
 
-function updateMatrixContent(matrixContent) {
-  // Flatten the 2D array into a 1D array
-  let flattenedContent = [].concat(...matrixContent);
-  
-  const matrixContainer = document.getElementById("matrix");
-  matrixContainer.innerHTML = ''; // clear any existing matrix items
+let previousValues = [];
 
-  flattenedContent.forEach(value => {
+function updateMatrixContent(matrixContent) {
+  let flattenedContent = [].concat(...matrixContent);
+  const matrixContainer = document.getElementById("matrix");
+  matrixContainer.innerHTML = '';
+
+  flattenedContent.forEach((value, i) => {
     const matrixCell = document.createElement('div');
     matrixCell.textContent = value.toFixed(5);
     matrixCell.className = 'matrix-item';
+    if (previousValues[i] !== undefined) {
+      const difference = Math.abs(value - previousValues[i]);
+      // logExtremeValues(difference);
+      const green = value >= previousValues[i] ? 255 : Math.round(25500 * difference);
+      const red = value < previousValues[i] ? 255 : Math.round(25500 * difference);
+      matrixCell.style.color = `rgb(${red}, ${green}, 0)`;
+    }
+    previousValues[i] = value;
+    if(value >= 0) {
+      matrixCell.style.textIndent = '10px';
+    }
     matrixContainer.appendChild(matrixCell);
   });
 }
+
+// let maxVal = -Infinity;
+// let minVal = Infinity;
+
+// function logExtremeValues(value) {
+//   if (value > maxVal) {
+//     maxVal = value;
+//     console.log('New maximum value: ' + maxVal);
+//   }
+//   if (value < minVal) {
+//     minVal = value;
+//     console.log('New minimum value: ' + minVal);
+//   }
+// }
