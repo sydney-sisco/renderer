@@ -159,13 +159,13 @@ const render = (o, accumulator) => {
     const t = o.triangles[i];
 
     // backface culling
-    // const edge1 = p5.Vector.sub(projectedPoints[t[1]], projectedPoints[t[0]]);
-    // const edge2 = p5.Vector.sub(projectedPoints[t[2]], projectedPoints[t[0]]);
-    // const normal = p5.Vector.cross(edge1, edge2).normalize();
+    const edge1 = p5.Vector.sub(projectedPoints[t[1]], projectedPoints[t[0]]);
+    const edge2 = p5.Vector.sub(projectedPoints[t[2]], projectedPoints[t[0]]);
+    const normal = p5.Vector.cross(edge1, edge2).normalize();
 
-    // if (normal.z < 0) {
+    if (normal.z > 0) {
 
-      // const colour = shade(normal);
+      const colour = shade(normal);
 
       strokeWeight(1);
       // fill(colour);
@@ -178,6 +178,6 @@ const render = (o, accumulator) => {
         projectedPoints[t[2]].y,
       );
     }
-  // }
+  }
 
 }

@@ -6,11 +6,7 @@ let accelX = 0;
 let accelY = 0;
 let accelZ = 0;
 
-let accumulator = [
-  [1, 0, 0],
-  [0, 1, 0],
-  [0, 0, 1]
-];
+let accumulator;
 
 let touchStart = null;
 let touchEnd = null;
@@ -211,6 +207,12 @@ function reset() {
   // angleX = .05;
   // angleY = .025;
   accelZ = 0;
+
+  accumulator = [
+    [1, 0, 0],
+    [0, 1, 0],
+    [0, 0, 1]
+  ];
 }
 
 function setup() {
