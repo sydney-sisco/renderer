@@ -278,3 +278,18 @@ const print_debug = () => {
   text(`angleX: ${angleX.toFixed(5)}`, -width/2 + 8, -height/2 + 48);
   text(`angleY: ${angleY.toFixed(5)}`, -width/2 + 8, -height/2 + 60);
 }
+
+function updateMatrixContent(matrixContent) {
+  // Flatten the 2D array into a 1D array
+  let flattenedContent = [].concat(...matrixContent);
+  
+  const matrixContainer = document.getElementById("matrix");
+  matrixContainer.innerHTML = ''; // clear any existing matrix items
+
+  flattenedContent.forEach(value => {
+    const matrixCell = document.createElement('div');
+    matrixCell.textContent = value.toFixed(5);
+    matrixCell.className = 'matrix-item';
+    matrixContainer.appendChild(matrixCell);
+  });
+}

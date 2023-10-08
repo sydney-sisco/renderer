@@ -137,6 +137,9 @@ const render = o => {
   const rotation = matmul(matmul(rotationZ(o.angleZ), rotationX(o.angleX)), rotationY(o.angleY));
   console.log('rotation: ', rotation);
 
+
+updateMatrixContent(rotation);
+
   const projectedPoints = [];
   for (let i = 0; i < o.points.length; i++) {
     // apply rotation
