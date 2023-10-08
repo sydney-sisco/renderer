@@ -83,7 +83,11 @@ const createButton = (setting) => {
     button.innerText = setting.name;
 
     button.addEventListener('click', () => {
-        setting.cb();
+        if (setting.cb) {
+            setting.cb();
+        } else {
+            console.error('no callback for button', setting.name);
+        }
     });
 
     // Append elements
@@ -112,7 +116,11 @@ const createSlider = (setting) => {
     // Set up event listener for slider
     slider.addEventListener('input', () => {
         setting.value = Number.parseFloat(slider.value);
-        console.log(`${setting.name}: ${setting.value}`);
+        if (setting.cb) {
+            setting.cb(setting.value);
+        } else {
+            console.error('no callback for slider', setting.name, setting.value);
+        }
     });
 
     // Append elements
