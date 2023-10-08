@@ -6,7 +6,7 @@ let accelX = 0;
 let accelY = 0;
 let accelZ = 0;
 
-const accumulator = [
+let accumulator = [
   [1, 0, 0],
   [0, 1, 0],
   [0, 0, 1]
@@ -233,7 +233,7 @@ function draw() {
 
   objects.forEach((object) => {
     object.rotate(accelX, accelY, accelZ);
-    render(object);
+    render(object, accumulator);
   });
 
   decelerate();
@@ -277,11 +277,51 @@ function touchStarted() {
 }
 
 function touchMoved() {
+  // check if the user is touching the canvas
+  if (mouseX < 0 || mouseX > width || mouseY < 0 || mouseY > height) {
+    touchStart = null;
+    return true;
+  }
+
   touchEnd = createVector(mouseX, mouseY);
+
+  // check if touchStart is the same as touchEnd
+  if (touchStart?.x === touchEnd.x && touchStart?.y === touchEnd.y) {
+    return false;
+  }
+
+  const touchVector = p5.Vector.sub(touchEnd, touchStart);
+  console.log(touchVector);
+
+  // construct a rotation matrix about the X axis with some sensitivity_constant * delta_x
+  const rotationX = (angle) => {
+    return [
+      [1.0, 0.0, 0.0],
+      [0.0, cos(angle), -sin(angle)],
+      [0.0, sin(angle), cos(angle)]
+    ];
+  };
+  const rotX = rotationX(0.0005* -touchVector.y);
+
+  // Construct another rotation matrix about the Y axis for the other component.
+  const rotationY = (angle) => {
+    return [
+      [cos(angle), 0.0, sin(angle)],
+      [0.0, 1.0, 0.0],
+      [-sin(angle), 0.0, cos(angle)]
+    ];
+  };
+  const rotY = rotationY(0.0005* touchVector.x);
+
+  // Multiply one, then the other onto the accumulator.
+  accumulator = matmul(rotX, accumulator);
+  accumulator = matmul(rotY, accumulator);
+
   // return false;
 }
 
 function touchEnded() {
+  bgColourValue = 0;
 
   // check if the user is touching the canvas
   if (mouseX < 0 || mouseX > width || mouseY < 0 || mouseY > height) {
@@ -300,15 +340,12 @@ function touchEnded() {
     return false;
   }
 
-  bgColourValue = 0;
-  
-
   // TODO: remove normalize to allow for speeds based on distance
   const touchVector = p5.Vector.sub(touchEnd, touchStart).normalize();
   console.log(touchVector);
 
-  accelX += 0.2 * touchVector.y;
-  accelY += 0.2 * touchVector.x;
+  // accelX += 0.2 * touchVector.y;
+  // accelY += 0.2 * touchVector.x;
 
   touchStart = null;
   touchEnd = null;

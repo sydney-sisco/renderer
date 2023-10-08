@@ -128,21 +128,20 @@ const shade = (normal) => {
   return color(light_intensity * -255);
 }
 
-const render = o => {
+const render = (o, accumulator) => {
   stroke(255);
   // strokeWeight(8);
   noFill();
 
-  // multiply rotation matrices together
-  const rotation = matmul(matmul(rotationZ(o.angleZ), rotationX(o.angleX)), rotationY(o.angleY));
+  // multiply rotation matrices together with the accumulator
+  const rotation = matmul(matmul(matmul(rotationZ(o.angleZ), rotationX(o.angleX)), rotationY(o.angleY)), accumulator);
+
   updateMatrixContent(rotation);
 
   const projectedPoints = [];
   for (let i = 0; i < o.points.length; i++) {
     // apply rotation
-    let rotated = matmul(rotationZ(o.angleZ), o.points[i]);
-    rotated = matmul(rotationX(o.angleX), rotated);
-    rotated = matmul(rotationY(o.angleY), rotated);
+    const rotated = matmul(rotation, o.points[i]);
 
     const projected2d = matmul(orthographicProjectionMatrix, rotated);
     const v = matrixToVector(projected2d);
