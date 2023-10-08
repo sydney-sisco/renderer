@@ -2,9 +2,9 @@ let frame = 0;
 let objects = [];
 let bgColourValue = 0;
 
-let angleX = 0;
-let angleY = 0;
-let angleZ = 0;
+let accelX = 0;
+let accelY = 0;
+let accelZ = 0;
 
 const accumulator = [
   [1, 0, 0],
@@ -16,6 +16,52 @@ let touchStart = null;
 let touchEnd = null;
 
 addSettings([
+  {
+    name: 'X Rotation',
+    type: 'slider',
+    min: -Math.PI,
+    max: Math.PI,
+    step: 0.01,
+    startingValue: 0,
+    cb: (value) => {
+      objects.forEach((object) => {
+        object.setAngleX(value);
+      });
+    }
+  },
+  {
+    name: 'Y Rotation',
+    type: 'slider',
+    min: -Math.PI,
+    max: Math.PI,
+    step: 0.01,
+    startingValue: 0,
+    cb: (value) => {
+      objects.forEach((object) => {
+        object.setAngleY(value);
+      });
+    }
+  },
+  {
+    name: 'Z Rotation',
+    type: 'slider',
+    min: -Math.PI,
+    max: Math.PI,
+    step: 0.01,
+    startingValue: 0,
+    cb: (value) => {
+      objects.forEach((object) => {
+        object.setAngleZ(value);
+      });
+    }
+  },
+  {
+    name: 'reset',
+    type: 'button',
+    cb: () => {
+      reset();
+    }
+  },
   {
     name: 'Cube',
     type: 'button',
@@ -33,7 +79,7 @@ addSettings([
     }
   },
   {
-    name: 'Toggle Debug',
+    name: 'debug',
     type: 'checkbox',
     value: true,
   },
@@ -159,9 +205,12 @@ function addImportedObject() {
 
 function reset() {
   objects = [];
-  angleX = .05;
-  angleY = .025;
-  angleZ = 0;
+
+  accelX = 0;
+  accelY = 0;
+  // angleX = .05;
+  // angleY = .025;
+  accelZ = 0;
 }
 
 function setup() {
@@ -183,13 +232,13 @@ function draw() {
   translate(width / 2, height / 2);
 
   objects.forEach((object) => {
-    object.rotate(angleX, angleY, angleZ);
+    object.rotate(accelX, accelY, accelZ);
     render(object);
   });
 
   decelerate();
 
-  if (settings['Toggle Debug'].value) {
+  if (settings['debug'].value) {
     print_debug();
   }
 
@@ -198,19 +247,19 @@ function draw() {
 
 function decelerate() {
   // reduce angles by 1% each frame
-  angleX *= 0.99;
-  angleY *= 0.99;
-  angleZ *= 0.99;
+  accelX *= 0.99;
+  accelY *= 0.99;
+  accelZ *= 0.99;
 
   // if the angles are very small, set them to 0
-  if (abs(angleX) < 0.00001) {
-    angleX = 0;
+  if (abs(accelX) < 0.00001) {
+    accelX = 0;
   }
-  if (abs(angleY) < 0.00001) {
-    angleY = 0;
+  if (abs(accelY) < 0.00001) {
+    accelY = 0;
   }
-  if (abs(angleZ) < 0.00001) {
-    angleZ = 0;
+  if (abs(accelZ) < 0.00001) {
+    accelZ = 0;
   }
 }
 
@@ -243,9 +292,9 @@ function touchEnded() {
 
   // check if touchStart is the same as touchEnd
   if (touchStart?.x === touchEnd.x && touchStart?.y === touchEnd.y) {
-    angleX = 0;
-    angleY = 0;
-    angleZ = 0;
+    accelX = 0;
+    accelY = 0;
+    accelZ = 0;
     touchStart = null;
     touchEnd = null;
     return false;
@@ -258,8 +307,8 @@ function touchEnded() {
   const touchVector = p5.Vector.sub(touchEnd, touchStart).normalize();
   console.log(touchVector);
 
-  angleX += 0.2 * touchVector.y;
-  angleY += 0.2 * touchVector.x;
+  accelX += 0.2 * touchVector.y;
+  accelY += 0.2 * touchVector.x;
 
   touchStart = null;
   touchEnd = null;
@@ -275,8 +324,8 @@ const print_debug = () => {
   text(`frame: ${frame}`, -width/2 + 8, -height/2 + 12);
   text(`frameRate: ${frameRate().toFixed(2)}`, -width/2 + 8, -height/2 + 24);
   text(`width: ${width}`, -width/2 + 8, -height/2 + 36);
-  text(`angleX: ${angleX.toFixed(5)}`, -width/2 + 8, -height/2 + 48);
-  text(`angleY: ${angleY.toFixed(5)}`, -width/2 + 8, -height/2 + 60);
+  text(`angleX: ${accelX.toFixed(5)}`, -width/2 + 8, -height/2 + 48);
+  text(`angleY: ${accelY.toFixed(5)}`, -width/2 + 8, -height/2 + 60);
 }
 
 let previousValues = [];
