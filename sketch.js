@@ -2,6 +2,7 @@ let frame = 0;
 let objects = [];
 let bgColourValue = 0;
 
+let addAccel = true;
 let accelX = 0;
 let accelY = 0;
 let accelZ = 0;
@@ -11,9 +12,11 @@ let accumulator;
 let touchStart = null;
 let touchEnd = null;
 
+let showDebug = true;
+
 addSettings([
   {
-    name: 'X Rotation',
+    name: 'XRotation',
     type: 'slider',
     min: -Math.PI,
     max: Math.PI,
@@ -26,7 +29,7 @@ addSettings([
     }
   },
   {
-    name: 'Y Rotation',
+    name: 'YRotation',
     type: 'slider',
     min: -Math.PI,
     max: Math.PI,
@@ -39,7 +42,7 @@ addSettings([
     }
   },
   {
-    name: 'Z Rotation',
+    name: 'ZRotation',
     type: 'slider',
     min: -Math.PI,
     max: Math.PI,
@@ -51,54 +54,34 @@ addSettings([
       });
     }
   },
-  {
-    name: 'reset',
-    type: 'button',
-    cb: () => {
-      reset();
-    }
-  },
-  {
-    name: 'Cube',
-    type: 'button',
-    cb: () => {
-      reset()
-      addCube();
-    }
-  },
-  {
-    name: 'Sphere',
-    type: 'button',
-    cb: () => {
-      reset()
-      addSphere();
-    }
-  },
-  {
-    name: 'debug',
-    type: 'checkbox',
-    value: true,
-  },
-  {
-    name: 'Loop',
-    type: 'checkbox',
-    value: true,
-    cb: () => {
-      if (settings['Loop'].value) {
-        loop();
-      }
-      else {
-        noLoop();
-      }
-    }
-  },
-  {
-    name: 'next frame',
-    type: 'button',
-    cb: () => {
-      redraw();
-    }
-  },
+  // {
+  //   name: 'Sphere',
+  //   type: 'button',
+  //   cb: () => {
+  //     reset()
+  //     addSphere();
+  //   }
+  // },
+  // {
+  //   name: 'Loop',
+  //   type: 'checkbox',
+  //   value: true,
+  //   cb: () => {
+  //     if (settings['Loop'].value) {
+  //       loop();
+  //     }
+  //     else {
+  //       noLoop();
+  //     }
+  //   }
+  // },
+  // {
+  //   name: 'next frame',
+  //   type: 'button',
+  //   cb: () => {
+  //     redraw();
+  //   }
+  // },
   {
     name: 'Mask',
     type: 'button',
@@ -131,15 +114,15 @@ addSettings([
       addImportedObject();
     }
   },
-  {
-    name: 'Sphere10',
-    type: 'button',
-    cb: async () => {
-      reset();
-      await parseFile('meshes/sphere10.obj');
-      addImportedObject();
-    }
-  },
+  // {
+  //   name: 'Sphere10',
+  //   type: 'button',
+  //   cb: async () => {
+  //     reset();
+  //     await parseFile('meshes/sphere10.obj');
+  //     addImportedObject();
+  //   }
+  // },
   {
     name: 'Sphere24',
     type: 'button',
@@ -149,15 +132,15 @@ addSettings([
       addImportedObject();
     }
   },
-  {
-    name: 'battery',
-    type: 'button',
-    cb: async () => {
-      reset();
-      await parseFile('meshes/battery.obj');
-      addImportedObject();
-    }
-  },
+  // {
+  //   name: 'battery',
+  //   type: 'button',
+  //   cb: async () => {
+  //     reset();
+  //     await parseFile('meshes/battery.obj');
+  //     addImportedObject();
+  //   }
+  // },
   {
     name: 'airplane',
     type: 'button',
@@ -165,8 +148,35 @@ addSettings([
       reset();
       await parseFile('meshes/11803_Airplane_v1_l1.obj');
       addImportedObject();
+      accelX = 0.1;
+      accelY = 0.1;
     }
-  }
+  },
+  {
+    name: 'bad cube',
+    type: 'button',
+    cb: () => {
+      reset()
+      addCube();
+    }
+  },
+  {
+    name: 'reset',
+    type: 'button',
+    cb: () => {
+      reset();
+    }
+  },
+  {
+    name: 'debug',
+    type: 'button',
+    cb: () => showDebug = !showDebug
+  },
+  {
+    name: 'toggle accel',
+    type: 'button',
+    cb: () => addAccel = !addAccel
+  },
 ]);
 
 function addCube() {
@@ -189,6 +199,12 @@ function addSphere() {
   ));
 }
 
+const addSphere7 = async () => {
+  reset();
+  await parseFile('meshes/sphere10.obj');
+  addImportedObject();
+};
+
 function addImportedObject() {
   objects.push(new ImportedObject(
     createVector(0, 0, 0),
@@ -197,6 +213,14 @@ function addImportedObject() {
     0,
     255
   ));
+
+  if (addAccel) {
+    accelX = 0.05;
+    accelY = 0.025;
+  }
+
+    // angleX = .05;
+  // angleY = .025;
 }
 
 function reset() {
@@ -219,7 +243,8 @@ function setup() {
   createCanvas(windowWidth, windowWidth);
   
   reset()
-  addCube()
+  // addCube()
+  addSphere7()
 }
 
 function draw() {
@@ -240,7 +265,7 @@ function draw() {
 
   decelerate();
 
-  if (settings['debug'].value) {
+  if (showDebug) {
     print_debug();
   }
 
@@ -363,8 +388,8 @@ const print_debug = () => {
   text(`frame: ${frame}`, -width/2 + 8, -height/2 + 12);
   text(`frameRate: ${frameRate().toFixed(2)}`, -width/2 + 8, -height/2 + 24);
   text(`width: ${width}`, -width/2 + 8, -height/2 + 36);
-  text(`angleX: ${accelX.toFixed(5)}`, -width/2 + 8, -height/2 + 48);
-  text(`angleY: ${accelY.toFixed(5)}`, -width/2 + 8, -height/2 + 60);
+  text(`accelX: ${accelX.toFixed(5)}`, -width/2 + 8, -height/2 + 48);
+  text(`accelY: ${accelY.toFixed(5)}`, -width/2 + 8, -height/2 + 60);
 }
 
 let previousValues = [];

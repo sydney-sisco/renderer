@@ -41,10 +41,11 @@ const createSelect = (setting) => {
         console.log(`${setting.name}: ${setting.value}`);
     });
 
-    // Append elements
     selectDiv.appendChild(label);
     selectDiv.appendChild(select);
-    document.body.appendChild(selectDiv);
+
+    const controlsWrapper = document.querySelector('#controlsWrapper');
+    controlsWrapper.appendChild(selectDiv);
 };
 
 const createCheckbox = (setting) => {
@@ -52,7 +53,6 @@ const createCheckbox = (setting) => {
     let label = document.createElement('label');
     let checkbox = document.createElement('input');
 
-    // Set attributes
     label.innerText = `${setting.name}:`;
     checkbox.type = 'checkbox';
     checkbox.id = `${setting.name}Checkbox`;
@@ -66,19 +66,17 @@ const createCheckbox = (setting) => {
         }
     });
 
-    // Append elements
     checkboxDiv.appendChild(label);
     checkboxDiv.appendChild(checkbox);
-    document.body.appendChild(checkboxDiv);
+
+    const controlsWrapper = document.querySelector('#controlsWrapper');
+    controlsWrapper.appendChild(checkboxDiv);
 };
 
 const createButton = (setting) => {
     let buttonDiv = document.createElement('div');
-    // let label = document.createElement('label');
     let button = document.createElement('button');
 
-    // Set attributes
-    // label.innerText = `${setting.name}:`;
     button.id = `${setting.name}Button`;
     button.innerText = setting.name;
 
@@ -90,18 +88,18 @@ const createButton = (setting) => {
         }
     });
 
-    // Append elements
-    // buttonDiv.appendChild(label);
     buttonDiv.appendChild(button);
-    document.body.appendChild(buttonDiv);
+    
+    const controlsWrapper = document.querySelector('#controlsWrapper');
+    controlsWrapper.appendChild(buttonDiv);
 };
 
 const createSlider = (setting) => {
     let sliderDiv = document.createElement('div');
+    sliderDiv.className = 'sliderDiv';
     let label = document.createElement('label');
     let slider = document.createElement('input');
 
-    // Set attributes
     label.innerText = `${setting.name}:`;
     slider.type = 'range';
     slider.min = setting.min;
@@ -123,7 +121,6 @@ const createSlider = (setting) => {
         }
     });
 
-    // Append elements
     sliderDiv.appendChild(label);
     sliderDiv.appendChild(slider);
     document.body.appendChild(sliderDiv);

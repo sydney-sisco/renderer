@@ -1,3 +1,9 @@
+let showPoints = false;
+
+const togglePoints = () => {
+  showPoints = !showPoints;
+};
+
 addSettings([
   // {
   //   name: 'projection',
@@ -16,8 +22,8 @@ addSettings([
   },
   {
     name: 'points',
-    type: 'checkbox',
-    value: false,
+    type: 'button',
+    cb: togglePoints
   },
 ]);
 
@@ -130,7 +136,6 @@ const shade = (normal) => {
 
 const render = (o, accumulator) => {
   stroke(255);
-  // strokeWeight(8);
   noFill();
 
   // multiply rotation matrices together with the accumulator
@@ -148,7 +153,7 @@ const render = (o, accumulator) => {
     v.mult(settings['renderMultiple'].value * 0.1);
     strokeWeight(4);
 
-    if(settings['points'].value) {
+    if(showPoints) {
       point(v.x, v.y);
     }
     projectedPoints[i] = v;
@@ -164,11 +169,8 @@ const render = (o, accumulator) => {
     const normal = p5.Vector.cross(edge1, edge2).normalize();
 
     if (normal.z > 0) {
-
-      const colour = shade(normal);
-
       strokeWeight(1);
-      // fill(colour);
+      fill('rgba(255, 255, 255, 0.25)');
       triangle(
         projectedPoints[t[0]].x,
         projectedPoints[t[0]].y,
@@ -179,5 +181,4 @@ const render = (o, accumulator) => {
       );
     }
   }
-
 }
