@@ -50,6 +50,7 @@ const rotationZ = (angle) => {
   ];
 };
 
+// TODO: extract projection stuff from this and DELETE it
 const renderCube = (cube) => {
 
   stroke(cube.color);
@@ -132,6 +133,10 @@ const render = o => {
   // strokeWeight(8);
   noFill();
 
+  // multiply rotation matrices together
+  const rotation = matmul(matmul(rotationZ(o.angleZ), rotationX(o.angleX)), rotationY(o.angleY));
+  console.log('rotation: ', rotation);
+
   const projectedPoints = [];
   for (let i = 0; i < o.points.length; i++) {
     // apply rotation
@@ -155,16 +160,16 @@ const render = o => {
     const t = o.triangles[i];
 
     // backface culling
-    const edge1 = p5.Vector.sub(projectedPoints[t[1]], projectedPoints[t[0]]);
-    const edge2 = p5.Vector.sub(projectedPoints[t[2]], projectedPoints[t[0]]);
-    const normal = p5.Vector.cross(edge1, edge2).normalize();
+    // const edge1 = p5.Vector.sub(projectedPoints[t[1]], projectedPoints[t[0]]);
+    // const edge2 = p5.Vector.sub(projectedPoints[t[2]], projectedPoints[t[0]]);
+    // const normal = p5.Vector.cross(edge1, edge2).normalize();
 
-    if (normal.z < 0) {
+    // if (normal.z < 0) {
 
-      const colour = shade(normal);
+      // const colour = shade(normal);
 
       strokeWeight(1);
-      fill(colour);
+      // fill(colour);
       triangle(
         projectedPoints[t[0]].x,
         projectedPoints[t[0]].y,
@@ -174,6 +179,6 @@ const render = o => {
         projectedPoints[t[2]].y,
       );
     }
-  }
+  // }
 
 }
