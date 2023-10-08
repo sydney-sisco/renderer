@@ -81,11 +81,38 @@ addSettings([
     }
   },
   {
+    name: 'Sphere7',
+    type: 'button',
+    cb: async () => {
+      reset();
+      await parseFile('meshes/sphere7.obj');
+      addImportedObject();
+    }
+  },
+  {
     name: 'Sphere10',
     type: 'button',
     cb: async () => {
       reset();
       await parseFile('meshes/sphere10.obj');
+      addImportedObject();
+    }
+  },
+  {
+    name: 'Sphere24',
+    type: 'button',
+    cb: async () => {
+      reset();
+      await parseFile('meshes/sphere24.obj');
+      addImportedObject();
+    }
+  },
+  {
+    name: 'battery',
+    type: 'button',
+    cb: async () => {
+      reset();
+      await parseFile('meshes/battery.obj');
       addImportedObject();
     }
   },
@@ -132,22 +159,23 @@ function addImportedObject() {
 
 function reset() {
   objects = [];
-  angleX = 0;
-  angleY = 0;
+  angleX = .05;
+  angleY = .025;
   angleZ = 0;
 }
 
 function setup() {
-  createCanvas(600, 400);
   createCanvas(windowWidth, windowWidth);
-
+  
+  reset()
   addCube()
 }
 
 function draw() {
   background(bgColourValue);
 
-  if (touchStart && touchEnd) {
+  const isDragging = touchStart && touchEnd;
+  if (isDragging) {
     stroke('magenta');
     line(touchStart.x, touchStart.y, touchEnd.x, touchEnd.y)
   }
@@ -155,11 +183,7 @@ function draw() {
   translate(width / 2, height / 2);
 
   objects.forEach((object) => {
-    // rotateX(angleX);
-
     object.rotate(angleX, angleY, angleZ);
-
-    // object
     render(object);
   });
 
@@ -169,7 +193,6 @@ function draw() {
     print_debug();
   }
 
-  // print_debug();
   frame++;
 }
 
@@ -190,6 +213,7 @@ function decelerate() {
     angleZ = 0;
   }
 }
+
 function touchStarted() {
 
   // check if the user is touching the canvas
