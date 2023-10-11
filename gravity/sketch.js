@@ -1,5 +1,9 @@
 let frame = 0;
-let showDebug = true;
+let showDebug = false;
+// let movers = [];
+
+let mover;
+let attractor;
 
 addSettings([
   {
@@ -11,13 +15,20 @@ addSettings([
 
 function setup() {
   createCanvas(windowWidth, windowWidth);
+
+  mover = new Mover(0, -100, 5);
+  attractor = new Attractor(0, 0, 5);
 }
 
 function draw() {
   background(0);
   translate(width/2, height/2);
 
-  circle(0, 0, 100)
+  mover.update();
+  mover.show();
+
+  attractor.attract(mover);
+  attractor.show();
 
   if (showDebug) {
     print_debug();
@@ -25,7 +36,6 @@ function draw() {
 
   frame++;
 }
-
 
 const print_debug = () => {
   stroke(255);
