@@ -2,8 +2,8 @@ let frame = 0;
 let showDebug = false;
 // let movers = [];
 
-let mover;
 let attractor;
+let planets = [];
 
 addSettings([
   {
@@ -16,18 +16,25 @@ addSettings([
 function setup() {
   createCanvas(windowWidth, windowWidth);
 
-  mover = new Mover(0, -100, 5);
+  let earth = new Mover(0, -100, new p5.Vector(1.5, 0), 1, 'blue'); // earth
+  planets.push(earth);
+  let mars = new Mover(-100, 0, new p5.Vector(0, -1.75), .66, 'red'); // mars
+  planets.push(mars);
+  
   attractor = new Attractor(0, 0, 5);
 }
 
 function draw() {
-  background(0);
+  background(0, 10);
   translate(width/2, height/2);
 
-  mover.update();
-  mover.show();
+  for (planet of planets) {
+    planet.update();
+    planet.show();
 
-  attractor.attract(mover);
+    attractor.attract(planet);
+  }
+
   attractor.show();
 
   if (showDebug) {
