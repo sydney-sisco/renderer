@@ -2,15 +2,17 @@ let frame = 0;
 let objects = [];
 let bgColourValue = 0;
 
-let addAccel = true;
+let addAccel = false;
 let accelX = 0;
 let accelY = 0;
 let accelZ = 0;
 
 let accumulator;
 
-let touchStart = null;
-let touchEnd = null;
+let touchStart = null; // for drawing the line
+let touchPrevious = null;
+let touchCurrent = null;
+const TOUCH_SENSITIVITY = 0.01;
 
 let showDebug = true;
 
@@ -250,10 +252,10 @@ function setup() {
 function draw() {
   background(bgColourValue);
 
-  const isDragging = touchStart && touchEnd;
+  const isDragging = touchStart && touchPrevious;
   if (isDragging) {
     stroke('magenta');
-    line(touchStart.x, touchStart.y, touchEnd.x, touchEnd.y)
+    line(touchStart.x, touchStart.y, touchPrevious.x, touchPrevious.y)
   }
 
   translate(width / 2, height / 2);
@@ -298,27 +300,26 @@ function touchStarted() {
   }
 
   bgColourValue = 16;
-  touchEnd = null;
   touchStart = createVector(mouseX, mouseY);
+  touchPrevious = touchStart;
   return false;
 }
 
 function touchMoved() {
   // check if the user is touching the canvas
   if (mouseX < 0 || mouseX > width || mouseY < 0 || mouseY > height) {
-    touchStart = null;
     return true;
   }
 
-  touchEnd = createVector(mouseX, mouseY);
+  touchCurrent = createVector(mouseX, mouseY);
 
-  // check if touchStart is the same as touchEnd
-  if (touchStart?.x === touchEnd.x && touchStart?.y === touchEnd.y) {
+  // check if previous is the same as current
+  if (touchPrevious?.x === touchCurrent.x && touchPrevious?.y === touchCurrent.y) {
     return false;
   }
 
-  const touchVector = p5.Vector.sub(touchEnd, touchStart);
-  console.log(touchVector);
+  const touchVector = p5.Vector.sub(touchCurrent, touchPrevious);
+  console.log('touchVector:', touchVector);
 
   // construct a rotation matrix about the X axis with some sensitivity_constant * delta_x
   const rotationX = (angle) => {
@@ -328,7 +329,7 @@ function touchMoved() {
       [0.0, sin(angle), cos(angle)]
     ];
   };
-  const rotX = rotationX(0.0005* -touchVector.y);
+  const rotX = rotationX(TOUCH_SENSITIVITY * - touchVector.y);
 
   // Construct another rotation matrix about the Y axis for the other component.
   const rotationY = (angle) => {
@@ -338,13 +339,15 @@ function touchMoved() {
       [-sin(angle), 0.0, cos(angle)]
     ];
   };
-  const rotY = rotationY(0.0005* touchVector.x);
+  const rotY = rotationY(TOUCH_SENSITIVITY * touchVector.x);
 
   // Multiply one, then the other onto the accumulator.
   accumulator = matmul(rotX, accumulator);
   accumulator = matmul(rotY, accumulator);
 
   // return false;
+
+  touchPrevious = touchCurrent;
 }
 
 function touchEnded() {
@@ -355,27 +358,28 @@ function touchEnded() {
     touchStart = null;
     return true;
   }
-  touchEnd = createVector(mouseX, mouseY);
+  touchCurrent = createVector(mouseX, mouseY);
 
   // check if touchStart is the same as touchEnd
-  if (touchStart?.x === touchEnd.x && touchStart?.y === touchEnd.y) {
+  if (touchStart?.x === touchCurrent.x && touchStart?.y === touchCurrent.y) {
     accelX = 0;
     accelY = 0;
     accelZ = 0;
     touchStart = null;
-    touchEnd = null;
+    touchCurrent = null;
+    touchPrevious = null;
     return false;
   }
 
-  // TODO: remove normalize to allow for speeds based on distance
-  const touchVector = p5.Vector.sub(touchEnd, touchStart).normalize();
+  const touchVector = p5.Vector.sub(touchCurrent, touchPrevious);
   console.log(touchVector);
 
   // accelX += 0.2 * touchVector.y;
   // accelY += 0.2 * touchVector.x;
 
   touchStart = null;
-  touchEnd = null;
+  touchCurrent = null;
+  touchPrevious = null;
 
   // return false;
 }
