@@ -5,12 +5,12 @@ const togglePoints = () => {
 };
 
 addSettings([
-  // {
-  //   name: 'projection',
-  //   type: 'select',
-  //   value: 'orthographic',
-  //   options: ['perspective', 'orthographic']
-  // },
+  {
+    name: 'projection',
+    type: 'select',
+    value: 'perspective',
+    options: ['perspective', 'orthographic']
+  },
   {
     name: 'renderMultiple',
     type: 'slider',
@@ -57,7 +57,7 @@ const rotationZ = (angle) => {
 };
 
 // TODO: extract projection stuff from this and DELETE it
-const renderCube = (cube) => {
+const renderCube = (cube, camera_vector) => {
 
   stroke(cube.color);
   // strokeWeight(8);
@@ -96,13 +96,18 @@ const renderCube = (cube) => {
     rotated[1][0] += cube.position.y;
     rotated[2][0] += cube.position.z;
 
+    // add the position of the camera
+    rotated[0][0] += camera_vector.x;
+    rotated[1][0] += camera_vector.y;
+    rotated[2][0] += camera_vector.z;
+
     let projection;
     if (settings['projection'].value === 'orthographic') {
       projection = orthographicProjectionMatrix;
     } else {
 
-      // const distance = 4.0;
-      const distance = variables['zoom'].value;
+      const distance = 3.0;
+      // const distance = variables['zoom'].value;
       const z = 1.0 / (distance - rotated[2][0]);
       projection = [
         [z, 0.0, 0.0],
@@ -126,6 +131,10 @@ const renderCube = (cube) => {
   }
 };
 
+const connect = (i, j, points)=>{
+  line(points[i].x, points[i].y, points[j].x, points[j].y);
+}
+
 const shade = (normal) => {
   const light = createVector(1, 1, 1).normalize();
   // const normalizedNormal = normal.normalize();
@@ -134,6 +143,7 @@ const shade = (normal) => {
   return color(light_intensity * -255);
 }
 
+// renders a mesh
 const render = (o, accumulator) => {
   stroke(255);
   noFill();
@@ -141,7 +151,7 @@ const render = (o, accumulator) => {
   // multiply rotation matrices together with the accumulator
   const rotation = matmul(matmul(matmul(rotationZ(o.angleZ), rotationX(o.angleX)), rotationY(o.angleY)), accumulator);
 
-  updateMatrixContent(rotation);
+  // updateMatrixContent(rotation);
 
   const projectedPoints = [];
   for (let i = 0; i < o.points.length; i++) {
