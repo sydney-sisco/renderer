@@ -9,8 +9,9 @@ const accumulator = [
 ];
 
 const CAVE_HEIGHT = 10;
-const INITIAL_SPEED = 16;
-let SPEED = INITIAL_SPEED;
+let INITIAL_SPEED, MAX_SPEED;
+let SPEED;
+let speedOutput;
 
 const player = {}
 player.y = 0
@@ -48,22 +49,34 @@ function toggleDrawLoop() {
   loopState = !loopState; // Toggle the state
 }
 
-
+// x:
+// y:
+// z: 
+// colour:
+//
+// creates a row of cubes from (x-3 , y, z) to (x+2, y, z)
 const generate_cube_row = (x, y, z, colour) => {
   for (let i = -3; i <= 2; i++) {
-    if (i % 2 === 1 || i % 2 === -1 ) {
-      continue;
+    const cube_x = x + i
+    console.log(cube_x);
+    if (cube_x % 2 === 0.5 || cube_x % 2 === -0.5) {
+      cubes.push(new Cube(createVector(cube_x, y, z), 0, 0, 0, colour))
     }
-    cubes.push(new Cube(createVector(x + i, y, z), 0, 0, 0, colour));
   }
 };
 
+// x: x coord of the column
+// y: 
+// z: z coord of the column
+// colour: the colour of the column
+//
+// creates a column of cubes from (x, -y , z) to (x, -(y + (CAVE_HEIGHT - 1)), z)
 const generate_cube_col = (x, y, z, colour) => {
   for (let i = 0; i < CAVE_HEIGHT; i++) {
-    if (i % 2 === 1 || i % 2 === -1 ) {
-      continue;
+    const cube_y = -(y+ i)
+    if (cube_y % 2 === 1 || cube_y % 2 === -1) {
+      cubes.push(new Cube(createVector(x, -(y+ i), z), 0, 0, 0, colour))
     }
-    cubes.push(new Cube(createVector(x, -(y+ i), z), 0, 0, 0, colour));
   }
 }
 
@@ -79,12 +92,14 @@ function setup() {
 
   select('#toggleLoop').mousePressed(toggleDrawLoop);
 
-  // score = 0;
+  INITIAL_SPEED = new PersistentSetting(createSlider(1, 32, 16), "INITIALSPEED");
+  MAX_SPEED = new PersistentSetting(createSlider(0, 32, 16), "MAXSPEED")
+  SPEED = INITIAL_SPEED.value();
+  speedOutput = createDiv(`${SPEED}`)
+
   colours_index++;
   frame++;
 }
-
-
 
 let y_climb = 0;
 
@@ -92,9 +107,7 @@ function draw() {
   background(bgColourValue);
   translate(width / 2, height / 2);
 
-
-
-  if (frame % SPEED === 0) {
+  if (frame !== 0 && frame % SPEED === 0) {
     score++;
 
     let noiseLevel = 2 * (frame / 100);
@@ -123,14 +136,13 @@ function draw() {
     colours_index++;
     if (colours_index >= colours.length) colours_index = 0;
 
-    if (score % 10 === 0 && SPEED > 1) {
+    if (score % 10 === 0 && SPEED > MAX_SPEED.value()) {
       SPEED--;
-    }
-  }
 
-  // objects.forEach((object) => {
-  //   render(object, accumulator);
-  // });
+      speedOutput.html(`${SPEED}`)
+    }
+
+  }
 
   cubes.forEach((cube, i)=> {
     // cube.rotate(0.001*i, 0.001*i, 0.001*i)
@@ -148,11 +160,6 @@ function draw() {
   })
 
   // remove cubes that have gone too far
-  // cubes.forEach((cube,i)=>{
-  //   if (cube.position.z > 2){
-  //     cubes.splice(i, 1);
-  //   }
-  // })
   cubes = cubes.filter(cube => cube.position.z <= 2);
 
   // drop or rise
@@ -166,7 +173,6 @@ function draw() {
   // console.log(player_pos.y);
 
   // check for collision
-  // new way
 
   // get the y_climb of the cubes that are at the player's current position
   const cube_y = cubes[0].position.y
@@ -176,11 +182,12 @@ function draw() {
 
   const ceiling = cube_y - 0.5
   const floor = cube_y - CAVE_HEIGHT + 0.5
-  console.log('c:', ceiling, 'f:', floor);
+  const middle = ceiling - (CAVE_HEIGHT / 2)
+  console.log('c:', ceiling, 'f:', floor, 'mid:', middle);
   if (-player.y > ceiling) {
     console.log(`you hit the floor!`);
 
-    player.y = -ceiling
+    player.y = -middle
     player.vel = 0
     reset_score()
     reset_speed()
@@ -189,31 +196,11 @@ function draw() {
   if (-player.y < floor) {
     console.log(`you hit the ceiling!`);
 
-    player.y = -floor
+    player.y = -middle
     player.vel = 0
     reset_score()
     reset_speed()
   }
-
-
-  // old way, just check hard coded values
-  // if (player.y > 2.5) {
-  //   player_pos.y = 2.5
-
-  //   player.y = 2.5
-  //   player.vel = 0
-  //   reset_score()
-  // }
-  // if (player.y < -2.5) {
-  //   player_pos.y = - 2.5
-
-  //   player.y = -2.5
-  //   player.vel = 0
-  //   reset_score()
-  // }
-
-  // cubes.forEach((cube, i)=>{
-  // })
 
   for (let i = cubes.length - 1; i >= 0; i--) {
     renderCube(cubes[i], createVector(0, player.y, 0));
@@ -240,5 +227,5 @@ const reset_score = () => {
 }
 
 const reset_speed = () => {
-  SPEED = INITIAL_SPEED
+  SPEED = INITIAL_SPEED.value()
 }
