@@ -4,28 +4,36 @@ const togglePoints = () => {
   showPoints = !showPoints;
 };
 
-addSettings([
-  {
-    name: 'projection',
-    type: 'select',
-    value: 'perspective',
-    options: ['perspective', 'orthographic']
-  },
-  {
-    name: 'renderMultiple',
-    type: 'slider',
-    value: 2000,
-    startingValue: 2000,
-    min: 400,
-    max: 4000,
-    step: 10,
-  },
-  {
-    name: 'points',
-    type: 'button',
-    cb: togglePoints
-  },
-]);
+// addSettings([
+//   {
+//     name: 'projection',
+//     type: 'select',
+//     value: 'perspective',
+//     options: ['perspective', 'orthographic']
+//   },
+//   {
+//     name: 'renderMultiple',
+//     type: 'slider',
+//     value: 2000,
+//     startingValue: 2000,
+//     min: 400,
+//     max: 4000,
+//     step: 10,
+//   },
+//   {
+//     name: 'points',
+//     type: 'button',
+//     cb: togglePoints
+//   },
+// ]);
+
+const settings = {
+  'projection': {
+    value: 'perspective'
+  }
+}
+
+// settings['projection'].value === 'orthographic'
 
 const orthographicProjectionMatrix = [
   [1, 0, 0],
