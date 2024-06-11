@@ -8,6 +8,8 @@ const accumulator = [
   [0, 0, 1]
 ];
 
+let noiseFrame = 0;
+
 let currentState;
 
 const States = {
@@ -16,7 +18,7 @@ const States = {
   GAME_OVER: 'gameOver'
 };
 
-const CAVE_HEIGHT = 10;
+let CAVE_HEIGHT;
 let INITIAL_SPEED, MAX_SPEED;
 let SPEED;
 let speedOutput;
@@ -78,7 +80,7 @@ const generate_cube_row = (x, y, z, colour) => {
 //
 // creates a column of cubes from (x, -y , z) to (x, -(y + (CAVE_HEIGHT - 1)), z)
 const generate_cube_col = (x, y, z, colour) => {
-  for (let i = 0; i < CAVE_HEIGHT; i++) {
+  for (let i = 0; i < CAVE_HEIGHT.value(); i++) {
     const cube_y = -(y+ i)
     if (cube_y % 2 === 1 || cube_y % 2 === -1) {
       cubes.push(new Cube(createVector(x, -(y+ i), z), 0, 0, 0, colour))
@@ -93,8 +95,9 @@ function setup() {
 
   select('#toggleLoop').mousePressed(toggleDrawLoop);
 
+  CAVE_HEIGHT = new PersistentSetting(createSlider(1, 32, 10), "CAVE_HEIGHT")
   INITIAL_SPEED = new PersistentSetting(createSlider(1, 32, 16), "INITIALSPEED");
-  MAX_SPEED = new PersistentSetting(createSlider(0, 32, 16), "MAXSPEED")
+  MAX_SPEED = new PersistentSetting(createSlider(0, 32, 4), "MAXSPEED")
   SPEED = INITIAL_SPEED.value();
   speedOutput = createDiv(`${SPEED}`)
 }
@@ -123,28 +126,32 @@ const drawGame = () => {
   if (frame % SPEED === 0) {
     score++;
 
-    let noiseLevel = 2 * (frame / 100);
-    let noiseScale = 1;
+    // Set the noise level and scale.
+    let noiseLevel = 100;
+    let noiseScale = 0.02;
   
     // Scale the input coordinate.
-    let nx = noiseScale * (frame / SPEED);
+    let nx = noiseScale * (noiseFrame++);
   
     // Compute the noise value.
-    // let y = noiseLevel * noise(nx);
-    let y = 0;
+    let y = noiseLevel * noise(nx);
+    y = Math.round(y);
+    // let y = 0;
 
-    // console.log('y:', y, 'nx:', nx, 'noiseLevel:', noiseLevel);
+    console.log('y:', y, 'nx:', nx, 'noiseLevel:', noiseLevel);
+
+    y_climb = y;
 
     generate_cube_row(0.5, 0 + y_climb, STARTING_DEPTH, colours[colours_index]);  
-    generate_cube_row(0.5, -CAVE_HEIGHT + y_climb, STARTING_DEPTH, colours[colours_index]);
+    generate_cube_row(0.5, -CAVE_HEIGHT.value() + y_climb, STARTING_DEPTH, colours[colours_index]);
     generate_cube_col(-3.5, 0 - y_climb, STARTING_DEPTH, colours[colours_index]);
     generate_cube_col( 3.5, 0 - y_climb, STARTING_DEPTH, colours[colours_index]);
     // y_climb--;
 
     // cave go up or down
     // Returns a random integer from -1 to 1:
-    climb = Math.floor(Math.random() * 3) - 1
-    y_climb += climb
+    // climb = Math.floor(Math.random() * 3) - 1
+    // y_climb += climb
 
     colours_index++;
     if (colours_index >= colours.length) colours_index = 0;
@@ -193,15 +200,15 @@ const drawGame = () => {
 
 
   const ceiling = cube_y - 0.5
-  const floor = cube_y - CAVE_HEIGHT + 0.5
-  const middle = ceiling - (CAVE_HEIGHT / 2)
+  const floor = cube_y - CAVE_HEIGHT.value() + 0.5
+  const middle = ceiling - (CAVE_HEIGHT.value() / 2)
   console.log('c:', ceiling, 'f:', floor, 'mid:', middle);
   if (-player.y > ceiling) {
     console.log(`you hit the floor!`);
 
     // player.y = -middle
     player.vel = 0
-    reset_score()
+    // reset_score()
     reset_speed()
     currentState = States.GAME_OVER
   }
@@ -211,7 +218,7 @@ const drawGame = () => {
 
     // player.y = -middle
     player.vel = 0
-    reset_score()
+    // reset_score()
     reset_speed()
     currentState = States.GAME_OVER
   }
@@ -234,6 +241,8 @@ const drawGame = () => {
 }
 
 function drawStartScreen() {
+  reset_score()
+
   fill(255);
   textAlign(CENTER, CENTER);
   textSize(32);
@@ -263,7 +272,7 @@ function mousePressed() {
     const cube_y = cubes[0].position.y
     console.log('cube_y:', cube_y, 'player.y:', player.y);
     const ceiling = cube_y - 0.5
-    const middle = ceiling - (CAVE_HEIGHT / 2)
+    const middle = ceiling - (CAVE_HEIGHT.value() / 2)
     player.y = -middle
 
     currentState = States.START
