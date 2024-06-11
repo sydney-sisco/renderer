@@ -8,13 +8,21 @@ const accumulator = [
   [0, 0, 1]
 ];
 
+let currentState;
+
+const States = {
+  START: 'start',
+  GAME: 'game',
+  GAME_OVER: 'gameOver'
+};
+
 const CAVE_HEIGHT = 10;
 let INITIAL_SPEED, MAX_SPEED;
 let SPEED;
 let speedOutput;
 
 const player = {}
-player.y = 0
+player.y = 5
 player.vel = 0
 player.acc = -0.01
 
@@ -34,8 +42,6 @@ const GREEN = '#028121';
 const colours = [RED, ORANGE, YELLOW, GREEN, BLUE, PURPLE];
 let colours_index = 0;
 const STARTING_DEPTH = -10;
-
-player_pos = null;
 
 let cubes = [];
 
@@ -83,12 +89,7 @@ const generate_cube_col = (x, y, z, colour) => {
 function setup() {
   createCanvas(800, 600);
 
-  generate_cube_row(0.5, 0, STARTING_DEPTH, colours[colours_index]);  
-  generate_cube_row(0.5, -CAVE_HEIGHT, STARTING_DEPTH, colours[colours_index]);
-  generate_cube_col(-3.5, 0, STARTING_DEPTH, colours[colours_index]);
-  generate_cube_col( 3.5, 0, STARTING_DEPTH, colours[colours_index]);
-
-  player_pos = createVector(0, 0, 0);
+  currentState = States.START;
 
   select('#toggleLoop').mousePressed(toggleDrawLoop);
 
@@ -96,18 +97,30 @@ function setup() {
   MAX_SPEED = new PersistentSetting(createSlider(0, 32, 16), "MAXSPEED")
   SPEED = INITIAL_SPEED.value();
   speedOutput = createDiv(`${SPEED}`)
-
-  colours_index++;
-  frame++;
 }
 
 let y_climb = 0;
 
 function draw() {
-  background(bgColourValue);
   translate(width / 2, height / 2);
 
-  if (frame !== 0 && frame % SPEED === 0) {
+  switch (currentState) {
+    case States.START:
+      background(bgColourValue);
+      drawStartScreen();
+      break;
+    case States.GAME:
+      background(bgColourValue);
+      drawGame();
+      break;
+    case States.GAME_OVER:
+      drawGameOverScreen();
+      break;
+  }
+}
+
+const drawGame = () => {
+  if (frame % SPEED === 0) {
     score++;
 
     let noiseLevel = 2 * (frame / 100);
@@ -170,7 +183,6 @@ function draw() {
   }
   // apply vel to pos
   player.y += player.vel
-  // console.log(player_pos.y);
 
   // check for collision
 
@@ -187,19 +199,21 @@ function draw() {
   if (-player.y > ceiling) {
     console.log(`you hit the floor!`);
 
-    player.y = -middle
+    // player.y = -middle
     player.vel = 0
     reset_score()
     reset_speed()
+    currentState = States.GAME_OVER
   }
 
   if (-player.y < floor) {
     console.log(`you hit the ceiling!`);
 
-    player.y = -middle
+    // player.y = -middle
     player.vel = 0
     reset_score()
     reset_speed()
+    currentState = States.GAME_OVER
   }
 
   for (let i = cubes.length - 1; i >= 0; i--) {
@@ -217,6 +231,43 @@ function draw() {
   text(`max: ${max_score}`, -350, 285)
 
   frame++;
+}
+
+function drawStartScreen() {
+  fill(255);
+  textAlign(CENTER, CENTER);
+  textSize(32);
+  text('Click to Start', 0, 0 + 50);
+  textSize(24)
+  text('Press and hold to go up.', 0, 0 - 20)
+  text('Release to go down', 0, 0 + 10)
+}
+
+function drawGameOverScreen() {
+  fill(255);
+  textAlign(CENTER, CENTER);
+  textSize(32);
+  text('Game Over', 0, 0 - 20);
+  textSize(24);
+  text(`Score: ${score}`, 0, 0 + 10)
+  textSize(16);
+  text('Click to Retry', 0, 0 + 50)
+}
+
+function mousePressed() {
+  if (currentState === States.START) {
+    currentState = States.GAME;
+  }
+
+  if (currentState === States.GAME_OVER) {
+    const cube_y = cubes[0].position.y
+    console.log('cube_y:', cube_y, 'player.y:', player.y);
+    const ceiling = cube_y - 0.5
+    const middle = ceiling - (CAVE_HEIGHT / 2)
+    player.y = -middle
+
+    currentState = States.START
+  }
 }
 
 const reset_score = () => {
