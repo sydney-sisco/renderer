@@ -56,6 +56,45 @@ addSettings([
       });
     }
   },
+  {
+    name: 'XPos',
+    type: 'slider',
+    min: -10,
+    max: 10,
+    step: 0.1,
+    startingValue: 0,
+    cb: (value) => {
+      objects.forEach((object) => {
+        object.setXPos(value);
+      });
+    }
+  },
+  {
+    name: 'YPos',
+    type: 'slider',
+    min: -10,
+    max: 10,
+    step: 0.1,
+    startingValue: 0,
+    cb: (value) => {
+      objects.forEach((object) => {
+        object.setYPos(value);
+      });
+    }
+  },
+  {
+    name: 'ZPos',
+    type: 'slider',
+    min: -10,
+    max: 10,
+    step: 0.1,
+    startingValue: 0,
+    cb: (value) => {
+      objects.forEach((object) => {
+        object.setZPos(value);
+      });
+    }
+  },
   // {
   //   name: 'Sphere',
   //   type: 'button',
@@ -155,11 +194,19 @@ addSettings([
     }
   },
   {
-    name: 'bad cube',
+    name: 'cube',
     type: 'button',
     cb: () => {
       reset()
       addCube();
+    }
+  },
+  {
+    name: 'bad cube',
+    type: 'button',
+    cb: () => {
+      reset()
+      addBadCube();
     }
   },
   {
@@ -183,6 +230,16 @@ addSettings([
 
 function addCube() {
   objects.push(new Cube(
+    createVector(0, 0, 0),
+    0,
+    0,
+    0,
+    255
+  ));
+}
+
+function addBadCube() {
+  objects.push(new BadCube(
     createVector(0, 0, 0),
     0,
     0,
