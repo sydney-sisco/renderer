@@ -40,6 +40,18 @@ class RenderObject {
     this.angleZ += z;
   }
 
+  setXPos = (x) => {
+    this.position = createVector(x, this.position.y, this.position.z);
+  }
+
+  setYPos = y => {
+    this.position = createVector(this.position.x, y, this.position.z);
+  }
+
+  setZPos = z => {
+    this.position = createVector(this.position.x, this.position.y, z);
+  }
+
   shift = (x, y, z) => {
     this.position.x+= x;
     this.position.y+= y;
