@@ -42,8 +42,9 @@ const ORANGE = '#FF8D00';
 const YELLOW = '#FFEE00';
 const BLUE = '#004CFF';
 const GREEN = '#028121';
-
-const colours = [RED, ORANGE, YELLOW, GREEN, BLUE, PURPLE];
+const WHITE = '#ffffff';
+// const colours = [RED, ORANGE, YELLOW, GREEN, BLUE, PURPLE];
+const colours = [RED, WHITE, BLUE]; // usa usa usa
 
 // colours from that ttv banner but they look bad here :\
 // const c1 = '#beaaff'
@@ -208,6 +209,14 @@ const drawGame = () => {
       SPEED--;
 
       speedOutput.html(`SPEED: ${SPEED}`)
+    }
+
+    // set initial player location based on the first cubes generated
+    if (frame === 0) {
+      const cube_y = cubes[0].position.y
+      const ceiling = cube_y - 0.5
+      const middle = ceiling - (CAVE_HEIGHT.value() / 2)
+      player.y = -middle
     }
 
   }
