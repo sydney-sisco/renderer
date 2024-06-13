@@ -8,6 +8,8 @@ const accumulator = [
   [0, 0, 1]
 ];
 
+let canvasWidth;
+
 let noiseFrame = 0;
 
 let currentState;
@@ -98,7 +100,7 @@ const generate_cube_col = (x, y, z, colour) => {
 
 function setup() {
 
-  const canvasWidth = windowWidth > 800 ? 800 : windowWidth;
+  canvasWidth = windowWidth > 800 ? 800 : windowWidth;
 
   createCanvas(canvasWidth, 600);
 
@@ -278,15 +280,35 @@ const drawGame = () => {
     print_debug();
   }
 
-  fill('white')
-  stroke('white')
-  textSize(60);
-  text(score, 0, 250);
-
-  textSize(25)
-  text(`max: ${max_score}`, 0, 285)
+  print_score();
 
   frame++;
+}
+
+const print_score = () => {
+
+  const EDGE_OFFSET = 25
+  const BOTTOM_OFFSET = 25
+
+  const x_offset = canvasWidth / 2
+  const y_offset = height / 2
+
+  fill('white')
+  stroke('white')
+
+  // left side
+  textAlign(LEFT, BOTTOM)
+  textSize(25)
+  text('score:', -x_offset + EDGE_OFFSET, y_offset - BOTTOM_OFFSET - 65)
+  textSize(60);
+  text(score, -x_offset + EDGE_OFFSET, y_offset - BOTTOM_OFFSET)
+
+  // right side
+  textAlign(RIGHT, BOTTOM)
+  textSize(25)
+  text('max:', x_offset - EDGE_OFFSET, y_offset - BOTTOM_OFFSET - 65)
+  textSize(60)
+  text(max_score, x_offset - EDGE_OFFSET, y_offset - BOTTOM_OFFSET)
 }
 
 function drawStartScreen() {
