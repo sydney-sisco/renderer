@@ -11,14 +11,21 @@ const accumulator = [
 let canvasWidth;
 
 let noiseFrame = 0;
-
-let currentState;
+let previousNoiseValue;
 
 const States = {
   START: 'start',
   GAME: 'game',
   GAME_OVER: 'gameOver'
 };
+let currentState;
+
+const CaveGenerationModes = {
+  RANDOM: 'random',
+  NOISE: 'noise',
+  TEST: 'test',
+}
+let caveGenerationMode = CaveGenerationModes.TEST
 
 let CAVE_HEIGHT;
 let INITIAL_SPEED, MAX_SPEED;
@@ -43,8 +50,8 @@ const YELLOW = '#FFEE00';
 const BLUE = '#004CFF';
 const GREEN = '#028121';
 const WHITE = '#ffffff';
-// const colours = [RED, ORANGE, YELLOW, GREEN, BLUE, PURPLE];
-const colours = [RED, WHITE, BLUE]; // usa usa usa
+const colours = [RED, ORANGE, YELLOW, GREEN, BLUE, PURPLE];
+// const colours = [RED, WHITE, BLUE]; // usa usa usa
 
 // colours from that ttv banner but they look bad here :\
 // const c1 = '#beaaff'
@@ -77,7 +84,6 @@ function toggleDrawLoop() {
 const generate_cube_row = (x, y, z, colour) => {
   for (let i = -3; i <= 2; i++) {
     const cube_x = x + i
-    console.log(cube_x);
     cubes.push(new Cube(createVector(cube_x, y, z), 0, 0, 0, colour))
     if (cube_x % 2 === 0.5 || cube_x % 2 === -0.5) {
     }
@@ -116,7 +122,7 @@ function setup() {
   speedOutput = createDiv(`SPEED: ${SPEED}`)
 }
 
-let y_climb = 0;
+// let y_climb = 0;
 
 function draw() {
   translate(width / 2, height / 2);
@@ -175,32 +181,58 @@ const drawGame = () => {
   if (frame % SPEED === 0) {
     score++;
 
-    // Set the noise level and scale.
-    let noiseLevel = 100;
-    let noiseScale = 0.02;
+    // cave go up or down
+    let y_climb;
+    if (caveGenerationMode === CaveGenerationModes.RANDOM) {
+      // Returns a random integer from -1 to 1:
+      climb = Math.floor(Math.random() * 3) - 1
+      y_climb = previousNoiseValue + climb
+    } else if (caveGenerationMode === CaveGenerationModes.NOISE) {
+      // Set the noise level and scale.
+      let noiseLevel = 100;
+      let noiseScale = 0.02;
+    
+      // Scale the input coordinate.
+      let nx = noiseScale * (noiseFrame++);
+    
+      // Compute the noise value.
+      let y = noiseLevel * noise(nx);
+      y = Math.round(y);
   
-    // Scale the input coordinate.
-    let nx = noiseScale * (noiseFrame++);
+      // console.log('y:', y, 'nx:', nx, 'noiseLevel:', noiseLevel);
   
-    // Compute the noise value.
-    let y = noiseLevel * noise(nx);
-    y = Math.round(y);
-    // let y = 0;
-
-    console.log('y:', y, 'nx:', nx, 'noiseLevel:', noiseLevel);
-
-    y_climb = y;
+      y_climb = y;
+    } else if (caveGenerationMode === CaveGenerationModes.TEST) {
+      y_climb = 0;
+    }
 
     generate_cube_row(0.5, 0 + y_climb, STARTING_DEPTH, colours[colours_index]);  
     generate_cube_row(0.5, -CAVE_HEIGHT.value() + y_climb, STARTING_DEPTH, colours[colours_index]);
     generate_cube_col(-3.5, 0 - y_climb, STARTING_DEPTH, colours[colours_index]);
     generate_cube_col( 3.5, 0 - y_climb, STARTING_DEPTH, colours[colours_index]);
-    // y_climb--;
 
-    // cave go up or down
-    // Returns a random integer from -1 to 1:
-    // climb = Math.floor(Math.random() * 3) - 1
-    // y_climb += climb
+
+    // fill in gaps created when the cave jumps up or down by more than 1 unit
+    if (y_climb - previousNoiseValue > 1) {
+      // add cube rows above
+      // console.log('bug: >1', 0 + y_climb, y_climb - previousNoiseValue)
+
+      for (let i = 1; i <= y_climb - previousNoiseValue; i++) {
+        generate_cube_row(0.5, -CAVE_HEIGHT.value() + y_climb - i, STARTING_DEPTH, '#ff00ff');
+      }
+
+    }
+    if (y_climb - previousNoiseValue < -1) {
+      // add cube rows below
+      // console.log('bug: <1', -CAVE_HEIGHT.value() + y_climb, y_climb - previousNoiseValue)
+      
+      for (let i = -1; i >= y_climb - previousNoiseValue; i--) {
+        generate_cube_row(0.5, 0 + y_climb - i, STARTING_DEPTH, '#ff00ff')
+      }
+    }
+    previousNoiseValue = y_climb
+
+
 
     colours_index++;
     if (colours_index >= colours.length) colours_index = 0;
@@ -253,13 +285,13 @@ const drawGame = () => {
   // get the y_climb of the cubes that are at the player's current position
   const cube_y = cubes[0].position.y
 
-  console.log('cube_y:', cube_y, 'player.y:', player.y);
+  // console.log('cube_y:', cube_y, 'player.y:', player.y);
 
 
   const ceiling = cube_y - 0.5
   const floor = cube_y - CAVE_HEIGHT.value() + 0.5
   const middle = ceiling - (CAVE_HEIGHT.value() / 2)
-  console.log('c:', ceiling, 'f:', floor, 'mid:', middle);
+  // console.log('c:', ceiling, 'f:', floor, 'mid:', middle);
   if (-player.y > ceiling) {
     console.log(`you hit the floor!`);
 
@@ -351,7 +383,7 @@ function mousePressed() {
 
   if (currentState === States.GAME_OVER) {
     const cube_y = cubes[0].position.y
-    console.log('cube_y:', cube_y, 'player.y:', player.y);
+    // console.log('cube_y:', cube_y, 'player.y:', player.y);
     const ceiling = cube_y - 0.5
     const middle = ceiling - (CAVE_HEIGHT.value() / 2)
     player.y = -middle
