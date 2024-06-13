@@ -42,6 +42,14 @@ const BLUE = '#004CFF';
 const GREEN = '#028121';
 
 const colours = [RED, ORANGE, YELLOW, GREEN, BLUE, PURPLE];
+
+// colours from that ttv banner but they look bad here :\
+// const c1 = '#beaaff'
+// const c2 = '#ff8dff'
+// const c3 = '#fafa19'
+// const c4 = '#00c7ad'
+// const colours = [c1, c2, c3, c4]
+
 let colours_index = 0;
 const STARTING_DEPTH = -10;
 
@@ -67,8 +75,8 @@ const generate_cube_row = (x, y, z, colour) => {
   for (let i = -3; i <= 2; i++) {
     const cube_x = x + i
     console.log(cube_x);
+    cubes.push(new Cube(createVector(cube_x, y, z), 0, 0, 0, colour))
     if (cube_x % 2 === 0.5 || cube_x % 2 === -0.5) {
-      cubes.push(new Cube(createVector(cube_x, y, z), 0, 0, 0, colour))
     }
   }
 };
@@ -82,14 +90,17 @@ const generate_cube_row = (x, y, z, colour) => {
 const generate_cube_col = (x, y, z, colour) => {
   for (let i = 0; i < CAVE_HEIGHT.value(); i++) {
     const cube_y = -(y+ i)
+    cubes.push(new Cube(createVector(x, -(y+ i), z), 0, 0, 0, colour))
     if (cube_y % 2 === 1 || cube_y % 2 === -1) {
-      cubes.push(new Cube(createVector(x, -(y+ i), z), 0, 0, 0, colour))
     }
   }
 }
 
 function setup() {
-  createCanvas(800, 600);
+
+  const canvasWidth = windowWidth > 800 ? 800 : windowWidth;
+
+  createCanvas(canvasWidth, 600);
 
   currentState = States.START;
 
@@ -99,7 +110,7 @@ function setup() {
   INITIAL_SPEED = new PersistentSetting(createSlider(1, 32, 16), "INITIALSPEED");
   MAX_SPEED = new PersistentSetting(createSlider(0, 32, 4), "MAXSPEED")
   SPEED = INITIAL_SPEED.value();
-  speedOutput = createDiv(`${SPEED}`)
+  speedOutput = createDiv(`SPEED: ${SPEED}`)
 }
 
 let y_climb = 0;
@@ -120,6 +131,41 @@ function draw() {
       drawGameOverScreen();
       break;
   }
+}
+
+let isInteracting = false;
+
+function touchStarted() {
+
+  if (currentState === States.START) {
+    currentState = States.GAME;
+  }
+
+  if (currentState === States.GAME_OVER) {
+    const cube_y = cubes[0].position.y
+    console.log('cube_y:', cube_y, 'player.y:', player.y);
+    const ceiling = cube_y - 0.5
+    const middle = ceiling - (CAVE_HEIGHT.value() / 2)
+    player.y = -middle
+
+    currentState = States.START
+  }
+
+  isInteracting = true;
+  return false;
+}
+
+function touchEnded() {
+  isInteracting = false;
+  return false;
+}
+
+function keyPressed() {
+  isInteracting = true;
+}
+
+function keyReleased() {
+  isInteracting = false;
 }
 
 const drawGame = () => {
@@ -159,7 +205,7 @@ const drawGame = () => {
     if (score % 10 === 0 && SPEED > MAX_SPEED.value()) {
       SPEED--;
 
-      speedOutput.html(`${SPEED}`)
+      speedOutput.html(`SPEED: ${SPEED}`)
     }
 
   }
@@ -183,10 +229,10 @@ const drawGame = () => {
   cubes = cubes.filter(cube => cube.position.z <= 2);
 
   // drop or rise
-  if (keyIsPressed === true) {
-    player.vel += -player.acc
+  if (isInteracting) {
+    player.vel += -player.acc;
   } else {
-    player.vel += player.acc
+    player.vel += player.acc;
   }
   // apply vel to pos
   player.y += player.vel
@@ -224,24 +270,28 @@ const drawGame = () => {
   }
 
   for (let i = cubes.length - 1; i >= 0; i--) {
-    renderCube(cubes[i], createVector(0, player.y, 0));
+    // renderCube(cubes[i], createVector(0, player.y, 0));
+    render(cubes[i], null, createVector(0, player.y, 0))
   }
 
   if (showDebug) {
     print_debug();
   }
 
-  textSize(75);
-  text(score, -350, 250);
+  fill('white')
+  stroke('white')
+  textSize(60);
+  text(score, 0, 250);
 
   textSize(25)
-  text(`max: ${max_score}`, -350, 285)
+  text(`max: ${max_score}`, 0, 285)
 
   frame++;
 }
 
 function drawStartScreen() {
   reset_score()
+  reset_cubes()
 
   fill(255);
   textAlign(CENTER, CENTER);
@@ -277,6 +327,25 @@ function mousePressed() {
 
     currentState = States.START
   }
+}
+
+
+// generate_cube_row(0.5, 0 + y_climb, STARTING_DEPTH, colours[colours_index]);  
+// generate_cube_row(0.5, -CAVE_HEIGHT.value() + y_climb, STARTING_DEPTH, colours[colours_index]);
+// generate_cube_col(-3.5, 0 - y_climb, STARTING_DEPTH, colours[colours_index]);
+// generate_cube_col( 3.5, 0 - y_climb, STARTING_DEPTH, colours[colours_index]);
+
+
+const reset_cubes = () => {
+  frame = 0
+  // noiseFrame = 0 // resetting this means we generate the same cave
+  cubes = []
+
+  // for(let i = STARTING_DEPTH + 1; i <= 2; i++) {
+  //   generate_cube_row(0.5, 0, i, 'grey')
+  //   generate_cube_row(0.5, -CAVE_HEIGHT.value(), i, 'grey')
+  // }
+
 }
 
 const reset_score = () => {
