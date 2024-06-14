@@ -1,12 +1,6 @@
-let objects = [];
 let bgColourValue = 0;
 let showDebug = false;
 let frame = 0;
-const accumulator = [
-  [1, 0, 0],
-  [0, 1, 0],
-  [0, 0, 1]
-];
 
 let canvasWidth;
 
@@ -28,21 +22,21 @@ const CaveGenerationModes = {
 }
 let caveGenerationMode = CaveGenerationModes.NOISE
 
+const STARTING_DEPTH = -10;
 let CAVE_HEIGHT;
 let INITIAL_SPEED, MAX_SPEED;
 let SPEED;
-let speedOutput;
+let speedOutputEl;
 
 const player = {}
 player.y = 5
 player.vel = 0
 player.acc = -0.01
 
-
 let score = 0
 let max_score = 0
 
-let loopState = true;
+let looping = true;
 
 const RED = '#E50000';
 const PURPLE = '#770088';
@@ -53,27 +47,23 @@ const GREEN = '#028121';
 const WHITE = '#ffffff';
 const colours = [RED, ORANGE, YELLOW, GREEN, BLUE, PURPLE];
 // const colours = [RED, WHITE, BLUE]; // usa usa usa
-
 // colours from that ttv banner but they look bad here :\
 // const c1 = '#beaaff'
 // const c2 = '#ff8dff'
 // const c3 = '#fafa19'
 // const c4 = '#00c7ad'
 // const colours = [c1, c2, c3, c4]
-
 let colours_index = 0;
-const STARTING_DEPTH = -10;
 
 let cubes = [];
 
 function toggleDrawLoop() {
-  // Pause or resume loop depending on current state
-  if (loopState) {
+  if (looping) {
     noLoop();
   } else {
     loop();
   }
-  loopState = !loopState; // Toggle the state
+  looping = !looping;
 }
 
 // x:
@@ -107,9 +97,7 @@ const generate_cube_col = (x, y, z, colour) => {
 }
 
 function setup() {
-
   canvasWidth = windowWidth > 800 ? 800 : windowWidth;
-
   createCanvas(canvasWidth, 600);
 
   currentState = States.START;
@@ -118,12 +106,10 @@ function setup() {
 
   CAVE_HEIGHT = new PersistentSetting(createSlider(1, 32, 10), "CAVE_HEIGHT")
   INITIAL_SPEED = new PersistentSetting(createSlider(1, 32, 16), "INITIALSPEED");
-  MAX_SPEED = new PersistentSetting(createSlider(0, 32, 4), "MAXSPEED")
-  SPEED = INITIAL_SPEED.value();
-  speedOutput = createDiv(`SPEED: ${SPEED}`)
+  MAX_SPEED = new PersistentSetting(createSlider(1, 32, 4), "MAXSPEED")
+  reset_speed()
+  speedOutputEl = createDiv(`SPEED: ${SPEED}`)
 }
-
-// let y_climb = 0;
 
 function draw() {
   translate(width / 2, height / 2);
@@ -150,16 +136,17 @@ let isInteracting = false;
 function touchStarted() {
 
   if (currentState === States.START) {
+    reset_prev_noise_value();
+    // frame = 0;
+    reset_frame();
     currentState = States.GAME;
   }
 
   if (currentState === States.GAME_OVER) {
-    const cube_y = cubes[0].position.y
-    console.log('cube_y:', cube_y, 'player.y:', player.y);
-    const ceiling = cube_y - 0.5
-    const middle = ceiling - (CAVE_HEIGHT.value() / 2)
-    player.y = -middle
+    reset_frame();
 
+    // generate initial cubes for start screen
+    createInitialCubes()
     currentState = States.START
   }
 
@@ -205,9 +192,10 @@ const drawGame = () => {
       // set the offset so that the generate cave lines up with the starting screen
       if (frame === 0) {
         initialNoiseOffset = y
+        console.log('setting initial noise offset:', initialNoiseOffset
+        );
       }
   
-      // console.log('y:', y, 'nx:', nx, 'noiseLevel:', noiseLevel);
       const adjusted_y_climb = initialNoiseOffset - y
       y_climb = adjusted_y_climb
 
@@ -240,16 +228,12 @@ const drawGame = () => {
       }
     }
     previousNoiseValue = y_climb
-
-
-
     colours_index++;
     if (colours_index >= colours.length) colours_index = 0;
 
     if (score % 10 === 0 && SPEED > MAX_SPEED.value()) {
       SPEED--;
-
-      speedOutput.html(`SPEED: ${SPEED}`)
+      speedOutputEl.html(`SPEED: ${SPEED}`)
     }
 
     // set initial player location based on the first cubes generated
@@ -284,8 +268,6 @@ const drawGame = () => {
   // get the y_climb of the cubes that are at the player's current position
   const cube_y = cubes[0].position.y
 
-  // console.log('cube_y:', cube_y, 'player.y:', player.y);
-
 
   const ceiling = cube_y - 0.5
   const floor = cube_y - CAVE_HEIGHT.value() + 0.5
@@ -294,9 +276,7 @@ const drawGame = () => {
   if (-player.y > ceiling) {
     console.log(`you hit the floor!`);
 
-    // player.y = -middle
     player.vel = 0
-    // reset_score()
     reset_speed()
     currentState = States.GAME_OVER
   }
@@ -304,9 +284,7 @@ const drawGame = () => {
   if (-player.y < floor) {
     console.log(`you hit the ceiling!`);
 
-    // player.y = -middle
     player.vel = 0
-    // reset_score()
     reset_speed()
     currentState = States.GAME_OVER
   }
@@ -320,8 +298,6 @@ const drawGame = () => {
   }
 
   print_score();
-
-  // frame++;
 }
 
 const print_score = () => {
@@ -333,7 +309,7 @@ const print_score = () => {
   const y_offset = height / 2
 
   fill('white')
-  stroke('white')
+  stroke('black')
 
   // left side
   textAlign(LEFT, BOTTOM)
@@ -350,9 +326,20 @@ const print_score = () => {
   text(max_score, x_offset - EDGE_OFFSET, y_offset - BOTTOM_OFFSET)
 }
 
+const createInitialCubes = () => {
+  for (let i = 2; i >= STARTING_DEPTH; i--) {
+    generate_cube_row(0.5, 0, i, colours[colours_index]);  
+    generate_cube_row(0.5, -CAVE_HEIGHT.value(), i, colours[colours_index]);
+    generate_cube_col(-3.5, 0, i, colours[colours_index]);
+    generate_cube_col( 3.5, 0, i, colours[colours_index]);
+
+    colours_index++;
+    if (colours_index >= colours.length) colours_index = 0;
+  }
+}
+
 function drawStartScreen() {
   reset_score()
-  // reset_cubes()
   reset_speed()
 
   player.y = 0 + (CAVE_HEIGHT.value() / 2)
@@ -379,22 +366,20 @@ function drawStartScreen() {
     render(cubes[i], null, createVector(0, player.y, 0))
   }
 
-
   fill(255);
   textAlign(CENTER, CENTER);
   textSize(32);
-  text('Tap to Start', 0, 0 + 50);
+  text('Tap to Start', 0, 0 + 60);
   textSize(24)
-  text('Press and hold to go up.', 0, 0 - 20)
-  text('Release to go down', 0, 0 + 10)
-
-  // frame++;
+  text('Press and hold to go up', 0, 0 - 70)
+  text('Release to go down', 0, 0 - 40)
 }
 
 function drawGameOverScreen() {
   reset_cubes();
 
   fill(255);
+  stroke('black')
   textAlign(CENTER, CENTER);
   textSize(32);
   text('Game Over', 0, 0 - 20);
@@ -407,30 +392,33 @@ function drawGameOverScreen() {
 function mousePressed() {
   if (currentState === States.START) {
     reset_prev_noise_value();
-    frame = 0;
+    reset_frame()
     currentState = States.GAME;
   }
 
   if (currentState === States.GAME_OVER) {
-    // const cube_y = cubes[0].position.y
-    // console.log('cube_y:', cube_y, 'player.y:', player.y);
-    // const ceiling = cube_y - 0.5
-    // const middle = ceiling - (CAVE_HEIGHT.value() / 2)
-    // player.y = -middle
+    // generate initial cubes for start screen
+    reset_frame();
+    createInitialCubes();
 
     currentState = States.START
   }
+
+  isInteracting = true
+}
+
+function mouseReleased() {
+  isInteracting = false
 }
 
 const reset_cubes = () => {
   frame = 0
-  // noiseFrame = 0 // resetting this means we generate the same cave
   cubes = []
 }
 
 const reset_score = () => {
   if (score > max_score) {
-    max_score = score  
+    max_score = score
   }
   score = 0
 }
@@ -445,4 +433,8 @@ const reset_player_pos = () => {
 
 const reset_prev_noise_value = () => {
   previousNoiseValue = 0
+}
+
+const reset_frame = () => {
+  frame = 0
 }
