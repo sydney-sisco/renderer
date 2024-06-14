@@ -23,7 +23,7 @@ const CaveGenerationModes = {
 let caveGenerationMode = CaveGenerationModes.NOISE
 
 const STARTING_DEPTH = -10;
-let CAVE_HEIGHT;
+let CAVE_HEIGHT, CAVE_WIDTH;
 let INITIAL_SPEED, MAX_SPEED;
 let SPEED;
 let speedOutputEl;
@@ -73,11 +73,13 @@ function toggleDrawLoop() {
 //
 // creates a row of cubes from (x-3 , y, z) to (x+2, y, z)
 const generate_cube_row = (x, y, z, colour) => {
-  for (let i = -3; i <= 2; i++) {
+
+  starting_x = - CAVE_WIDTH.value() / 2
+  ending_x = (CAVE_WIDTH.value() / 2) -1 
+
+  for (let i = starting_x; i <= ending_x; i++) {
     const cube_x = x + i
     cubes.push(new Cube(createVector(cube_x, y, z), 0, 0, 0, colour))
-    if (cube_x % 2 === 0.5 || cube_x % 2 === -0.5) {
-    }
   }
 };
 
@@ -89,11 +91,33 @@ const generate_cube_row = (x, y, z, colour) => {
 // creates a column of cubes from (x, -y , z) to (x, -(y + (CAVE_HEIGHT - 1)), z)
 const generate_cube_col = (x, y, z, colour) => {
   for (let i = 0; i < CAVE_HEIGHT.value(); i++) {
-    const cube_y = -(y+ i)
     cubes.push(new Cube(createVector(x, -(y+ i), z), 0, 0, 0, colour))
-    if (cube_y % 2 === 1 || cube_y % 2 === -1) {
+  }
+}
+
+const generateCaveSlice = (y_offset, depth) => {
+  generate_cube_row(0.5, 0 + y_offset, depth, colours[colours_index]);  
+  generate_cube_row(0.5, -CAVE_HEIGHT.value() + y_offset, depth, colours[colours_index]);
+  generate_cube_col(( - CAVE_WIDTH.value() / 2 ) - 0.5, 0 - y_offset, depth, colours[colours_index]);
+  generate_cube_col( (CAVE_WIDTH.value() / 2 ) + 0.5, 0 - y_offset, depth, colours[colours_index]);
+
+  // fill in gaps created when the cave jumps up or down by more than 1 unit
+  if (y_offset - previousNoiseValue > 1) {
+    // add cube rows above
+    for (let i = 1; i <= y_offset - previousNoiseValue; i++) {
+      generate_cube_row(0.5, -CAVE_HEIGHT.value() + y_offset - i, depth, '#ff00ff');
+    }
+
+  }
+  if (y_offset - previousNoiseValue < -1) {
+    // add cube rows below
+    for (let i = -1; i >= y_offset - previousNoiseValue; i--) {
+      generate_cube_row(0.5, 0 + y_offset - i, depth, '#ff00ff')
     }
   }
+  previousNoiseValue = y_offset
+  colours_index++;
+  if (colours_index >= colours.length) colours_index = 0;
 }
 
 function setup() {
@@ -105,6 +129,7 @@ function setup() {
   select('#toggleLoop').mousePressed(toggleDrawLoop);
 
   CAVE_HEIGHT = new PersistentSetting(createSlider(1, 32, 10), "CAVE_HEIGHT")
+  CAVE_WIDTH = new PersistentSetting(createSlider(2, 10, 6, 2), "CAVE_WIDTH")
   INITIAL_SPEED = new PersistentSetting(createSlider(1, 32, 16), "INITIALSPEED");
   MAX_SPEED = new PersistentSetting(createSlider(1, 32, 4), "MAXSPEED")
   reset_speed()
@@ -137,7 +162,6 @@ function touchStarted() {
 
   if (currentState === States.START) {
     reset_prev_noise_value();
-    // frame = 0;
     reset_frame();
     currentState = States.GAME;
   }
@@ -203,33 +227,7 @@ const drawGame = () => {
       y_climb = 0;
     }
 
-    generate_cube_row(0.5, 0 + y_climb, STARTING_DEPTH, colours[colours_index]);  
-    generate_cube_row(0.5, -CAVE_HEIGHT.value() + y_climb, STARTING_DEPTH, colours[colours_index]);
-    generate_cube_col(-3.5, 0 - y_climb, STARTING_DEPTH, colours[colours_index]);
-    generate_cube_col( 3.5, 0 - y_climb, STARTING_DEPTH, colours[colours_index]);
-
-
-    // fill in gaps created when the cave jumps up or down by more than 1 unit
-    if (y_climb - previousNoiseValue > 1) {
-      // add cube rows above
-      // console.log('bug: >1', 0 + y_climb, y_climb - previousNoiseValue)
-
-      for (let i = 1; i <= y_climb - previousNoiseValue; i++) {
-        generate_cube_row(0.5, -CAVE_HEIGHT.value() + y_climb - i, STARTING_DEPTH, '#ff00ff');
-      }
-
-    }
-    if (y_climb - previousNoiseValue < -1) {
-      // add cube rows below
-      // console.log('bug: <1', -CAVE_HEIGHT.value() + y_climb, y_climb - previousNoiseValue)
-      
-      for (let i = -1; i >= y_climb - previousNoiseValue; i--) {
-        generate_cube_row(0.5, 0 + y_climb - i, STARTING_DEPTH, '#ff00ff')
-      }
-    }
-    previousNoiseValue = y_climb
-    colours_index++;
-    if (colours_index >= colours.length) colours_index = 0;
+    generateCaveSlice(y_climb, STARTING_DEPTH)
 
     if (score % 10 === 0 && SPEED > MAX_SPEED.value()) {
       SPEED--;
@@ -243,11 +241,10 @@ const drawGame = () => {
       const middle = ceiling - (CAVE_HEIGHT.value() / 2)
       player.y = -middle
     }
-
   }
 
   cubes.forEach((cube, i)=> {
-    // cube.rotate(0.001*i, 0.001*i, 0.001*i)
+    // cube.rotate(0.001*i, 0.001*i, 0.001*i) // drugs mode
     cube.shift(0, 0, 1.0/SPEED)
   })
 
@@ -264,15 +261,11 @@ const drawGame = () => {
   player.y += player.vel
 
   // check for collision
-
   // get the y_climb of the cubes that are at the player's current position
   const cube_y = cubes[0].position.y
 
-
   const ceiling = cube_y - 0.5
   const floor = cube_y - CAVE_HEIGHT.value() + 0.5
-  const middle = ceiling - (CAVE_HEIGHT.value() / 2)
-  // console.log('c:', ceiling, 'f:', floor, 'mid:', middle);
   if (-player.y > ceiling) {
     console.log(`you hit the floor!`);
 
@@ -328,13 +321,7 @@ const print_score = () => {
 
 const createInitialCubes = () => {
   for (let i = 2; i >= STARTING_DEPTH; i--) {
-    generate_cube_row(0.5, 0, i, colours[colours_index]);  
-    generate_cube_row(0.5, -CAVE_HEIGHT.value(), i, colours[colours_index]);
-    generate_cube_col(-3.5, 0, i, colours[colours_index]);
-    generate_cube_col( 3.5, 0, i, colours[colours_index]);
-
-    colours_index++;
-    if (colours_index >= colours.length) colours_index = 0;
+    generateCaveSlice(0, i)
   }
 }
 
@@ -346,14 +333,7 @@ function drawStartScreen() {
 
 
   if (frame % SPEED === 0) {
-    generate_cube_row(0.5, 0, STARTING_DEPTH, colours[colours_index]);  
-    generate_cube_row(0.5, -CAVE_HEIGHT.value(), STARTING_DEPTH, colours[colours_index]);
-    generate_cube_col(-3.5, 0, STARTING_DEPTH, colours[colours_index]);
-    generate_cube_col( 3.5, 0, STARTING_DEPTH, colours[colours_index]);
-
-    colours_index++;
-    if (colours_index >= colours.length) colours_index = 0;
-    
+    generateCaveSlice(0, STARTING_DEPTH)
   }
     
   cubes.forEach((cube, i)=> {
