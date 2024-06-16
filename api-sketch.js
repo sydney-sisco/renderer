@@ -38,21 +38,16 @@ let max_score = 0
 
 let looping = true;
 
-const RED = '#E50000';
-const PURPLE = '#770088';
-const ORANGE = '#FF8D00';
-const YELLOW = '#FFEE00';
-const BLUE = '#004CFF';
-const GREEN = '#028121';
-const WHITE = '#ffffff';
-const colours = [RED, ORANGE, YELLOW, GREEN, BLUE, PURPLE];
-// const colours = [RED, WHITE, BLUE]; // usa usa usa
-// colours from that ttv banner but they look bad here :\
-// const c1 = '#beaaff'
-// const c2 = '#ff8dff'
-// const c3 = '#fafa19'
-// const c4 = '#00c7ad'
-// const colours = [c1, c2, c3, c4]
+// r-cube colours
+const BLUE = '#0046ad'
+const RED = '#b71234'
+const YELLOW = '#ffd500'
+const GREEN = '#009b48'
+const ORANGE = '#ff5800'
+const WHITE = '#ffffff'
+const colours = [BLUE, RED, YELLOW, GREEN, ORANGE, WHITE]
+const DEBUG_PINK = '#ff00ff'
+
 let colours_index = 0;
 
 let cubes = [];
@@ -75,11 +70,22 @@ function toggleDrawLoop() {
 const generate_cube_row = (x, y, z, colour) => {
 
   starting_x = - CAVE_WIDTH.value() / 2
-  ending_x = (CAVE_WIDTH.value() / 2) -1 
+  ending_x = (CAVE_WIDTH.value() / 2) -1
+
+  const temp_cubes = []
 
   for (let i = starting_x; i <= ending_x; i++) {
     const cube_x = x + i
-    cubes.push(new Cube(createVector(cube_x, y, z), 0, 0, 0, colour))
+    temp_cubes.push(new Cube(createVector(cube_x, y, z), 0, 0, 0, colour))
+  }
+
+  // sort from the middle out, for the renderer.
+  temp_cubes.sort((a, b) => {
+    return Math.abs(a.position.x) - Math.abs(b.position.x)
+  })
+
+  for (c in temp_cubes) {
+    cubes.push(temp_cubes[c])
   }
 };
 
@@ -90,7 +96,7 @@ const generate_cube_row = (x, y, z, colour) => {
 //
 // creates a column of cubes from (x, -y , z) to (x, -(y + (CAVE_HEIGHT - 1)), z)
 const generate_cube_col = (x, y, z, colour) => {
-  for (let i = 0; i < CAVE_HEIGHT.value(); i++) {
+  for (let i = 1; i < CAVE_HEIGHT.value(); i++) {
     cubes.push(new Cube(createVector(x, -(y+ i), z), 0, 0, 0, colour))
   }
 }
@@ -105,14 +111,14 @@ const generateCaveSlice = (y_offset, depth) => {
   if (y_offset - previousNoiseValue > 1) {
     // add cube rows above
     for (let i = 1; i <= y_offset - previousNoiseValue; i++) {
-      generate_cube_row(0.5, -CAVE_HEIGHT.value() + y_offset - i, depth, '#ff00ff');
+      generate_cube_row(0.5, -CAVE_HEIGHT.value() + y_offset - i, depth, colours[colours_index]);
     }
 
   }
   if (y_offset - previousNoiseValue < -1) {
     // add cube rows below
     for (let i = -1; i >= y_offset - previousNoiseValue; i--) {
-      generate_cube_row(0.5, 0 + y_offset - i, depth, '#ff00ff')
+      generate_cube_row(0.5, 0 + y_offset - i, depth, colours[colours_index])
     }
   }
   previousNoiseValue = y_offset
@@ -121,7 +127,7 @@ const generateCaveSlice = (y_offset, depth) => {
 }
 
 function setup() {
-  canvasWidth = windowWidth > 800 ? 800 : windowWidth;
+  canvasWidth = windowWidth > 600 ? 600 : windowWidth;
   createCanvas(canvasWidth, 600);
 
   currentState = States.START;
@@ -281,9 +287,15 @@ const drawGame = () => {
     reset_speed()
     currentState = States.GAME_OVER
   }
+  const camera_vector = createVector(0, -player.y, 1)
+  const sortedCubes = cubes.slice().sort((a, b) => {
+    const vec_a = p5.Vector.sub(camera_vector, a.position)
+    const vec_b = p5.Vector.sub(camera_vector, b.position)
+    return vec_a.mag() - vec_b.mag()
+  })
 
-  for (let i = cubes.length - 1; i >= 0; i--) {
-    render(cubes[i], null, createVector(0, player.y, 0))
+  for (let i = sortedCubes.length - 1; i >= 0; i--) {
+    render(sortedCubes[i], null, createVector(0, player.y, 0))
   }
 
   if (showDebug) {
@@ -341,9 +353,18 @@ function drawStartScreen() {
   })
   // remove cubes that have gone too far
   cubes = cubes.filter(cube => cube.position.z <= 2);
-      
-  for (let i = cubes.length - 1; i >= 0; i--) {
-    render(cubes[i], null, createVector(0, player.y, 0))
+  
+  // sort cubes by distance to camera so they are rendered back to front
+  const camera_vector = createVector(0, -player.y, 1)
+
+  const sortedCubes = cubes.slice().sort((a, b) => {
+    const vec_a = p5.Vector.sub(camera_vector, a.position)
+    const vec_b = p5.Vector.sub(camera_vector, b.position)
+    return vec_a.mag() - vec_b.mag()
+  })
+
+  for (let i = sortedCubes.length - 1; i >= 0; i--) {
+    render(sortedCubes[i], null, createVector(0, player.y, 0))
   }
 
   fill(255);
