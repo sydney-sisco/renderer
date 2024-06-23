@@ -1,5 +1,7 @@
 class Cube extends RenderObject {
-  constructor(position, angleX, angleY, angleZ, colour) {
+  constructor(position, angleX, angleY, angleZ, colour, scale) {
+
+
     
     const points = () => {
       const points = [];
@@ -11,6 +13,15 @@ class Cube extends RenderObject {
       points.push(createVector(-.5, .5, -.5));
       points.push(createVector(-.5, -.5, -.5));
       points.push(createVector(-.5, -.5, .5));
+
+      if (scale) {
+        for (let i = 0; i < points.length; i++) {
+          const point_x = points[i].x * scale.x
+          const point_y = points[i].y * scale.y
+          const point_z = points[i].z * scale.z
+          points[i] = createVector(point_x, point_y, point_z)
+        }
+      }
 
       return points;
     }
