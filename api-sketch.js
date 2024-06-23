@@ -68,25 +68,7 @@ function toggleDrawLoop() {
 //
 // creates a row of cubes from (x-3 , y, z) to (x+2, y, z)
 const generate_cube_row = (x, y, z, colour) => {
-
-  starting_x = - CAVE_WIDTH.value() / 2
-  ending_x = (CAVE_WIDTH.value() / 2) -1
-
-  const temp_cubes = []
-
-  for (let i = starting_x; i <= ending_x; i++) {
-    const cube_x = x + i
-    temp_cubes.push(new Cube(createVector(cube_x, y, z), 0, 0, 0, colour))
-  }
-
-  // sort from the middle out, for the renderer.
-  temp_cubes.sort((a, b) => {
-    return Math.abs(a.position.x) - Math.abs(b.position.x)
-  })
-
-  for (c in temp_cubes) {
-    cubes.push(temp_cubes[c])
-  }
+  cubes.push(new Cube(createVector(0, y, z), 0, 0, 0, colour, createVector(CAVE_WIDTH.value(),1,1)))
 };
 
 // x: x coord of the column
@@ -96,9 +78,7 @@ const generate_cube_row = (x, y, z, colour) => {
 //
 // creates a column of cubes from (x, -y , z) to (x, -(y + (CAVE_HEIGHT - 1)), z)
 const generate_cube_col = (x, y, z, colour) => {
-  for (let i = 1; i < CAVE_HEIGHT.value(); i++) {
-    cubes.push(new Cube(createVector(x, -(y+ i), z), 0, 0, 0, colour))
-  }
+  cubes.push(new Cube(createVector(x, - (y + CAVE_HEIGHT.value() / 2), z), 0, 0, 0, colour, createVector(1,CAVE_HEIGHT.value() - 1,1)))
 }
 
 const generateCaveSlice = (y_offset, depth) => {
@@ -134,7 +114,7 @@ function setup() {
 
   select('#toggleLoop').mousePressed(toggleDrawLoop);
 
-  CAVE_HEIGHT = new PersistentSetting(createSlider(1, 32, 10), "CAVE_HEIGHT")
+  CAVE_HEIGHT = new PersistentSetting(createSlider(1, 32, 12), "CAVE_HEIGHT")
   CAVE_WIDTH = new PersistentSetting(createSlider(2, 10, 6, 2), "CAVE_WIDTH")
   INITIAL_SPEED = new PersistentSetting(createSlider(1, 32, 16), "INITIALSPEED");
   MAX_SPEED = new PersistentSetting(createSlider(1, 32, 4), "MAXSPEED")
@@ -235,7 +215,7 @@ const drawGame = () => {
 
     generateCaveSlice(y_climb, STARTING_DEPTH)
 
-    if (score % 10 === 0 && SPEED > MAX_SPEED.value()) {
+    if (score % 25 === 0 && SPEED > MAX_SPEED.value()) {
       SPEED--;
       speedOutputEl.html(`SPEED: ${SPEED}`)
     }
@@ -287,15 +267,18 @@ const drawGame = () => {
     reset_speed()
     currentState = States.GAME_OVER
   }
-  const camera_vector = createVector(0, -player.y, 1)
-  const sortedCubes = cubes.slice().sort((a, b) => {
-    const vec_a = p5.Vector.sub(camera_vector, a.position)
-    const vec_b = p5.Vector.sub(camera_vector, b.position)
-    return vec_a.mag() - vec_b.mag()
-  })
+  // const camera_vector = createVector(0, -player.y, 1)
+  // const sortedCubes = cubes.slice().sort((a, b) => {
+  //   const vec_a = p5.Vector.sub(camera_vector, a.position)
+  //   const vec_b = p5.Vector.sub(camera_vector, b.position)
+  //   return vec_a.mag() - vec_b.mag()
+  // })
 
-  for (let i = sortedCubes.length - 1; i >= 0; i--) {
-    render(sortedCubes[i], null, createVector(0, player.y, 0))
+  // for (let i = sortedCubes.length - 1; i >= 0; i--) {
+  //   render(sortedCubes[i], null, createVector(0, player.y, 0))
+  // }
+  for (let i = cubes.length - 1; i >= 0; i--) {
+    render(cubes[i], null, createVector(0, player.y, 0))
   }
 
   if (showDebug) {
@@ -383,11 +366,21 @@ function drawGameOverScreen() {
   stroke('black')
   textAlign(CENTER, CENTER);
   textSize(32);
-  text('Game Over', 0, 0 - 20);
+  text('Game Over', 0, 0 - 70);
   textSize(24);
-  text(`Score: ${score}`, 0, 0 + 10)
-  textSize(16);
-  text('Click to Retry', 0, 0 + 50)
+  text(`Score: ${score}`, 0, 10)
+  if (is_high_score()) {
+    fill(colours[colours_index])
+    text('New high score!', 0, -30)
+    fill(255)
+
+    if (frame % 15 === 0) {
+      colours_index++
+      if (colours_index >= colours.length) colours_index = 0;
+    }
+  }
+  textSize(32);
+  text('Tap to Retry', 0, 0 + 60);
 }
 
 function mousePressed() {
@@ -413,8 +406,11 @@ function mouseReleased() {
 }
 
 const reset_cubes = () => {
-  frame = 0
   cubes = []
+}
+
+const is_high_score = () => {
+  return score > max_score
 }
 
 const reset_score = () => {
