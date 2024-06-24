@@ -22,7 +22,7 @@ const CaveGenerationModes = {
 }
 let caveGenerationMode = CaveGenerationModes.NOISE
 
-const STARTING_DEPTH = -10;
+const STARTING_DEPTH = -15;
 let CAVE_HEIGHT, CAVE_WIDTH;
 let INITIAL_SPEED, MAX_SPEED;
 let SPEED;
@@ -107,8 +107,7 @@ const generateCaveSlice = (y_offset, depth) => {
 }
 
 function setup() {
-  canvasWidth = windowWidth > 600 ? 600 : windowWidth;
-  createCanvas(canvasWidth, 600);
+  createCanvas(getCanvasWidth(), windowHeight);
 
   currentState = States.START;
 
@@ -116,10 +115,26 @@ function setup() {
 
   CAVE_HEIGHT = new PersistentSetting(createSlider(1, 32, 12), "CAVE_HEIGHT")
   CAVE_WIDTH = new PersistentSetting(createSlider(2, 10, 6, 2), "CAVE_WIDTH")
-  INITIAL_SPEED = new PersistentSetting(createSlider(1, 32, 16), "INITIALSPEED");
+  INITIAL_SPEED = new PersistentSetting(createSlider(1, 32, 12), "INITIALSPEED");
   MAX_SPEED = new PersistentSetting(createSlider(1, 32, 4), "MAXSPEED")
   reset_speed()
   speedOutputEl = createDiv(`SPEED: ${SPEED}`)
+}
+
+function getCanvasWidth() {
+  // Define the max aspect ratio (width to height)
+  const maxAspectRatio = 0.65;
+  
+  // Calculate the aspect ratio of the window
+  let windowAspectRatio = windowWidth/windowHeight;
+  
+  if (windowAspectRatio > maxAspectRatio) {
+    // If the window aspect ratio is more than max, limit the canvas width to maintain aspect ratio
+    return windowHeight * maxAspectRatio;
+  } else {
+    // Otherwise, use the full width of the window
+    return windowWidth;
+  }
 }
 
 function draw() {
@@ -140,6 +155,10 @@ function draw() {
   }
 
   frame++
+}
+
+function windowResized() {
+  resizeCanvas(getCanvasWidth(), windowHeight);
 }
 
 let isInteracting = false;
@@ -293,8 +312,8 @@ const print_score = () => {
   const EDGE_OFFSET = 25
   const BOTTOM_OFFSET = 25
 
-  const x_offset = canvasWidth / 2
-  const y_offset = height / 2
+  const x_offset = getCanvasWidth() / 2
+  const y_offset = windowHeight / 2
 
   fill('white')
   stroke('black')
